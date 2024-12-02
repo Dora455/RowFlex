@@ -5,7 +5,6 @@ using RowFlex.Components;
 using RowFlex.Components.Account;
 using RowFlex.Data;
 using RowFlex.Models;
-using RowFlex.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
