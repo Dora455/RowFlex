@@ -7,11 +7,12 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
 @using RowFlex.Data
+@using RowFlex.Models;
 
-@inject SignInManager<ApplicationUser> SignInManager
-@inject UserManager<ApplicationUser> UserManager
-@inject IUserStore<ApplicationUser> UserStore
-@inject IEmailSender<ApplicationUser> EmailSender
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
+@inject IUserStore<User> UserStore
+@inject IEmailSender<User> EmailSender
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<ExternalLogin> Logger
@@ -23,7 +24,7 @@
 <h2>Associate your @ProviderDisplayName account.</h2>
 <hr />
 
-<div  class="alert alert-info">
+<div class="alert alert-info">
     You've successfully authenticated with <strong>@ProviderDisplayName</strong>.
     Please enter an email address for this site below and click the Register button to finish
     logging in.
@@ -35,7 +36,8 @@
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email." />
+                <InputText @bind-Value="Input.Email" class="form-control" autocomplete="email"
+                    placeholder="Please enter your email." />
                 <label for="email" class="form-label">Email</label>
                 <ValidationMessage For="() => Input.Email" />
             </div>
@@ -100,17 +102,17 @@
     {
         // Sign in the user with this external login provider if the user already has a login.
         var result = await SignInManager.ExternalLoginSignInAsync(
-            externalLoginInfo.LoginProvider,
-            externalLoginInfo.ProviderKey,
-            isPersistent: false,
-            bypassTwoFactor: true);
+        externalLoginInfo.LoginProvider,
+        externalLoginInfo.ProviderKey,
+        isPersistent: false,
+        bypassTwoFactor: true);
 
         if (result.Succeeded)
         {
             Logger.LogInformation(
-                "{Name} logged in with {LoginProvider} provider.",
-                externalLoginInfo.Principal.Identity?.Name,
-                externalLoginInfo.LoginProvider);
+            "{Name} logged in with {LoginProvider} provider.",
+            externalLoginInfo.Principal.Identity?.Name,
+            externalLoginInfo.LoginProvider);
             RedirectManager.RedirectTo(ReturnUrl);
         }
         else if (result.IsLockedOut)
@@ -146,8 +148,8 @@
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 
                 var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-                    NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-                    new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
+                NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+                new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
                 await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
 
                 // If account confirmation is required, we need to show the link if we don't have a real email sender
@@ -164,26 +166,26 @@
         message = $"Error: {string.Join(",", result.Errors.Select(error => error.Description))}";
     }
 
-    private ApplicationUser CreateUser()
+    private User CreateUser()
     {
         try
         {
-            return Activator.CreateInstance<ApplicationUser>();
+            return Activator.CreateInstance<User>();
         }
         catch
         {
-            throw new InvalidOperationException($"Can't create an instance of '{nameof(ApplicationUser)}'. " +
-                $"Ensure that '{nameof(ApplicationUser)}' is not an abstract class and has a parameterless constructor");
+            throw new InvalidOperationException($"Can't create an instance of '{nameof(User)}'. " +
+            $"Ensure that '{nameof(User)}' is not an abstract class and has a parameterless constructor");
         }
     }
 
-    private IUserEmailStore<ApplicationUser> GetEmailStore()
+    private IUserEmailStore<User> GetEmailStore()
     {
         if (!UserManager.SupportsUserEmail)
         {
             throw new NotSupportedException("The default UI requires a user store with email support.");
         }
-        return (IUserEmailStore<ApplicationUser>)UserStore;
+        return (IUserEmailStore<User>)UserStore;
     }
 
     private sealed class InputModel
