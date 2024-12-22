@@ -1,0 +1,23 @@
+@page "/authorizeUsers"
+
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+
+<PageTitle>Authorize Users</PageTitle>
+
+<AuthorizeView>
+    Hello @context.User.Identity?.Name!
+</AuthorizeView>
+
+<AuthorizeView Roles="Admin">
+    <p>You are an Admin.</p>
+</AuthorizeView>
+
+<AuthorizeView Roles="Coach">
+    <p>You are an Coach.</p>
+</AuthorizeView>
+
+<AuthorizeView Roles="Athlete">
+    <p>Sorry... You don't have permissions for this page.</p>
+</AuthorizeView>
