@@ -10,10 +10,12 @@ public class ClubMembership
     [Required]
     [ForeignKey(nameof(Training))]
     public string AthleteId { get; set; }
+    public virtual User Athlete { get; set; }
 
     [Required]
     [ForeignKey(nameof(Training))]
     public int ClubId { get; set; }
+    public virtual Club Club { get; set; }
 
     public MembershipStatus Status { get; set; }
 

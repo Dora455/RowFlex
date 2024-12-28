@@ -16,5 +16,7 @@ public class User : IdentityUser
 
     // Navigation property for the club the athlete belongs to (only for athletes)
     public int? ClubId { get; set; }
+
+    public double? Weight { get; set; }
 }
 
