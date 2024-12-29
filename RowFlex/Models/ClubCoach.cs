@@ -8,13 +8,13 @@ public class ClubCoach
     public int Id { get; set; }
 
     [Required]
-    [ForeignKey(nameof(Training))]
+    [ForeignKey(nameof(Club))]
     public int ClubId { get; set; }
     public virtual Club Club { get; set; }
 
 
     [Required]
-    [ForeignKey(nameof(Training))]
+    [ForeignKey(nameof(User))]
     public string CoachId { get; set; }  // Foreign key to User (Coach)
     public virtual User Coach { get; set; }
 }

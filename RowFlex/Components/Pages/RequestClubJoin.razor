@@ -1,0 +1,93 @@
+@page "/request"
+
+@using Microsoft.AspNetCore.Authorization
+@using RowFlex.Models
+@using RowFlex.Data
+@inject ClubService clubService
+@inject IHttpContextAccessor HttpContextAccessor
+@rendermode InteractiveServer
+@using System.Security.Claims
+@attribute [Authorize]
+
+<PageTitle>Authorize Users</PageTitle>
+
+<AuthorizeView>
+    Hello @context.User.Identity?.Name!
+</AuthorizeView>
+
+<AuthorizeView Roles="Athlete">
+    <h3>Request membership</h3>
+
+    <InputSelect id="Club" class="form-control" @bind-Value="clubId">
+        <option value="">Select a club...</option>
+        @foreach (var club in Clubs)
+        {
+            <option value="@club.Id">@club.Name</option>
+        }
+    </InputSelect>
+    <button class="btn btn-primary mt-2" @onclick="(() => OnClubChangeAthlete())">Request membership</button>
+</AuthorizeView>
+
+
+<AuthorizeView Roles="Coach">
+    <h3>Request membership</h3>
+
+    <InputSelect id="Club" class="form-control" @bind-Value="clubId">
+        <option value="">Select a club...</option>
+        @foreach (var club in Clubs)
+        {
+            <option value="@club.Id">@club.Name</option>
+        }
+    </InputSelect>
+    <button class="btn btn-primary mt-2" @onclick="(() => OnClubChangeCoach())">Request membership</button>
+</AuthorizeView>
+@code {
+    private List<Club> Clubs = new();
+    public int clubId;
+    string userId;
+    User user;
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch all clubs for the logged-in coach
+        userId = HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        user = clubService.GetUserById(userId);
+        Clubs = await clubService.GetAllClubsAsync();
+    }
+
+    private async Task OnClubChangeAthlete()
+    {
+        var club = clubService.GetClubById(clubId);
+        if (club != null)
+        {
+            Console.WriteLine($"User email: {user}");
+            Console.WriteLine($"User name: {user.Name}");
+            var membership = new ClubMembership
+                {
+                    AthleteId = userId,
+                    ClubId = clubId,
+                    EndDate = null,
+                    StartDate = DateTime.UtcNow,
+                    Status = MembershipStatus.Pending
+                };
+            await clubService.UpdateUserClub(user, clubId);
+            await clubService.AddAthleteMembership(membership);
+        }
+    }
+
+    private async Task OnClubChangeCoach()
+    {
+        var club = clubService.GetClubById(clubId);
+        if (club != null)
+        {
+            var clubCoach = new ClubCoach
+                {
+                    CoachId = userId,
+                    ClubId = clubId
+                };
+            Console.WriteLine($"User: {user}");
+            Console.WriteLine($"ClubCoach: {clubCoach}");
+            @* await clubService.UpdateCoachClub(user, clubCoach); *@
+            await clubService.AddCoachToClubAsync(clubCoach);
+        }
+    }
+}

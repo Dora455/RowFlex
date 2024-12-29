@@ -1,0 +1,38 @@
+@page "/addNewClub"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject ClubService clubService
+@using Microsoft.AspNetCore.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims
+@using RowFlex.Models
+
+<AuthorizeView>
+    Hello @context.User.Identity?.Name!
+</AuthorizeView>
+
+
+<PageTitle>Add New Club</PageTitle>
+
+<AuthorizeView Roles="Admin">
+    <h2>Create New Club</h2>
+
+    <div>
+        <label for="clubName">Club Name:</label>
+        <input type="text" id="clubName" @bind="ClubName" placeholder="Enter club name" />
+    </div>
+
+    <button class="btn btn-primary mt-2" @onclick="(() => AddClub())">Add Club</button>
+</AuthorizeView>
+
+@code {
+    public string ClubName;
+
+    public async Task AddClub()
+    {
+        var club = new Club();
+        club.Name = ClubName;
+        clubService.AddNewClub(club);
+    }
+}
