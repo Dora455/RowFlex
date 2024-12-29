@@ -43,21 +43,39 @@ public class ClubService
             .ToList();
     }
 
-    public List<Club> GetAllClubs()
+    public async Task<List<Club>> GetAllClubsAsync()
     {
-        return _context.Clubs.ToList();
+        return await _context.Clubs.ToListAsync();
     }
-
+    public async Task<List<ClubCoach>> GetAllClubCoachesAsync()
+    {
+        return await _context.ClubCoaches
+        .Include(cc => cc.Club)
+        .Include(cc => cc.Coach)
+        .ToListAsync();
+    }
+    public async Task<List<User>> GetAllCoachesAsync()
+    {
+        return await _context.Users.Where(u => u.Role == "Coach").ToListAsync();
+    }
     public async Task AddAthleteMembership(ClubMembership membership)
     {
         _context.ClubMemberships.Add(membership);
         await _context.SaveChangesAsync();
     }
 
-    public async Task AddCoachToClub(ClubCoach clubCoach)
+    public async Task AddCoachToClubAsync(ClubCoach clubCoach)
     {
         _context.ClubCoaches.Add(clubCoach);
-        _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
+    }
+    public async Task DeleteClubCoach(ClubCoach clubCoach)
+    {
+        if (clubCoach != null)
+        {
+            _context.ClubCoaches.Remove(clubCoach);
+            await _context.SaveChangesAsync();
+        }
     }
     public async Task UpdateUserClub(User user, int clubId)
     {
@@ -66,7 +84,9 @@ public class ClubService
     }
     public async Task UpdateCoachClub(User user, ClubCoach clubCoach)
     {
-        user.ClubsAsCoach.Add(clubCoach); // Assign coach to the club
+        var tmp = user.ClubsAsCoach;
+        tmp.Add(clubCoach);
+        user.ClubsAsCoach = tmp; // Assign coach to the club
         await _context.SaveChangesAsync();
     }
     public async Task AddNewClub(Club club)
@@ -107,7 +127,7 @@ public class ClubService
         return _context.ClubCoaches
             .FirstOrDefault(u => u.ClubId == clubId && u.CoachId == userId);
     }
-    public async Task RemoveCoachFromClub(int clubCoachId)
+    public async Task RemoveCoachFromClubAsync(int clubCoachId)
     {
         var clubCoach = await _context.ClubCoaches.FindAsync(clubCoachId);
         if (clubCoach != null)

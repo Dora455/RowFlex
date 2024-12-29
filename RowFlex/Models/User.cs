@@ -18,5 +18,6 @@ public class User : IdentityUser
     public int? ClubId { get; set; }
 
     public double? Weight { get; set; }
+    public string Role { get; set; }
 }
 

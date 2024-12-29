@@ -43,7 +43,6 @@
 </AuthorizeView>
 @code {
     private List<Club> Clubs = new();
-    private string SelectedClubName;
     public int clubId;
     string userId;
     User user;
@@ -52,7 +51,7 @@
         // Fetch all clubs for the logged-in coach
         userId = HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         user = clubService.GetUserById(userId);
-        Clubs = clubService.GetAllClubs();
+        Clubs = await clubService.GetAllClubsAsync();
     }
 
     private async Task OnClubChangeAthlete()
@@ -60,7 +59,6 @@
         var club = clubService.GetClubById(clubId);
         if (club != null)
         {
-            SelectedClubName = club.Name;
             Console.WriteLine($"User email: {user}");
             Console.WriteLine($"User name: {user.Name}");
             var membership = new ClubMembership
@@ -71,8 +69,8 @@
                     StartDate = DateTime.UtcNow,
                     Status = MembershipStatus.Pending
                 };
-            clubService.UpdateUserClub(user, clubId);
-            clubService.AddAthleteMembership(membership);
+            await clubService.UpdateUserClub(user, clubId);
+            await clubService.AddAthleteMembership(membership);
         }
     }
 
@@ -84,10 +82,12 @@
             var clubCoach = new ClubCoach
                 {
                     CoachId = userId,
-                    ClubId = clubId,
+                    ClubId = clubId
                 };
-            clubService.UpdateCoachClub(user, clubCoach);
-            clubService.AddCoachToClub(clubCoach);
+            Console.WriteLine($"User: {user}");
+            Console.WriteLine($"ClubCoach: {clubCoach}");
+            @* await clubService.UpdateCoachClub(user, clubCoach); *@
+            await clubService.AddCoachToClubAsync(clubCoach);
         }
     }
 }
