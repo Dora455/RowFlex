@@ -26,6 +26,29 @@
         }
     </InputSelect>
     <button class="btn btn-primary mt-2" @onclick="(() => OnClubChangeAthlete())">Request membership</button>
+    <h3 class="mt-4">Your Membership Requests</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Club</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var membership in UserMemberships)
+            {
+                <tr>
+                    <td>@membership.Club.Name</td>
+                    <td>@membership.Status.ToString()</td>
+                    <td>
+                        <button class="btn btn-danger"
+                            @onclick="(() => DeleteMembershipRequest(membership.Id))">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </AuthorizeView>
 
 
@@ -46,12 +69,13 @@
     public int clubId;
     string userId;
     User user;
+    List<ClubMembership> UserMemberships = new();
     protected override async Task OnInitializedAsync()
     {
-        // Fetch all clubs for the logged-in coach
         userId = HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         user = clubService.GetUserById(userId);
         Clubs = await clubService.GetAllClubsAsync();
+        UserMemberships = await clubService.GetUserMembershipsAsync(userId);
     }
 
     private async Task OnClubChangeAthlete()
@@ -69,11 +93,17 @@
                     StartDate = DateTime.UtcNow,
                     Status = MembershipStatus.Pending
                 };
-            await clubService.UpdateUserClub(user, clubId);
             await clubService.AddAthleteMembership(membership);
+
+            UserMemberships = await clubService.GetUserMembershipsAsync(userId);
+
         }
     }
-
+    private async Task DeleteMembershipRequest(int membershipId)
+    {
+        await clubService.RemoveMembershipAsync(membershipId);
+        UserMemberships = await clubService.GetUserMembershipsAsync(userId);
+    }
     private async Task OnClubChangeCoach()
     {
         var club = clubService.GetClubById(clubId);

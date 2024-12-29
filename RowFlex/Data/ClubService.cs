@@ -47,6 +47,25 @@ public class ClubService
     {
         return await _context.Clubs.ToListAsync();
     }
+    public async Task AddNewClub(Club club)
+    {
+        _context.Clubs.Add(club);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task RemoveClubAsync(int clubId)
+    {
+        var clubCoaches = _context.ClubCoaches.Where(cc => cc.ClubId == clubId);
+        _context.ClubCoaches.RemoveRange(clubCoaches);
+
+        var clubMemberships = _context.ClubMemberships.Where(cm => cm.ClubId == clubId);
+        _context.ClubMemberships.RemoveRange(clubMemberships);
+
+        // Step 3: Delete the club itself
+        var club = await _context.Clubs.FindAsync(clubId);
+        _context.Clubs.Remove(club);
+        await _context.SaveChangesAsync();
+    }
     public async Task<List<ClubCoach>> GetAllClubCoachesAsync()
     {
         return await _context.ClubCoaches
@@ -69,14 +88,6 @@ public class ClubService
         _context.ClubCoaches.Add(clubCoach);
         await _context.SaveChangesAsync();
     }
-    public async Task DeleteClubCoach(ClubCoach clubCoach)
-    {
-        if (clubCoach != null)
-        {
-            _context.ClubCoaches.Remove(clubCoach);
-            await _context.SaveChangesAsync();
-        }
-    }
     public async Task UpdateUserClub(User user, int clubId)
     {
         user.ClubId = clubId; // Assign coach to the club
@@ -88,11 +99,6 @@ public class ClubService
         tmp.Add(clubCoach);
         user.ClubsAsCoach = tmp; // Assign coach to the club
         await _context.SaveChangesAsync();
-    }
-    public async Task AddNewClub(Club club)
-    {
-        _context.Clubs.Add(club);
-        _context.SaveChangesAsync();
     }
 
     public async Task AcceptAthlete(int membershipId)
@@ -136,5 +142,20 @@ public class ClubService
             await _context.SaveChangesAsync();
         }
     }
-
+    public async Task<List<ClubMembership>> GetUserMembershipsAsync(string userId)
+    {
+        return await _context.ClubMemberships
+            .Where(m => m.AthleteId == userId)
+            .Include(m => m.Club)
+            .ToListAsync();
+    }
+    public async Task RemoveMembershipAsync(int membershipId)
+    {
+        var membership = await _context.ClubMemberships.FindAsync(membershipId);
+        if (membership != null)
+        {
+            _context.ClubMemberships.Remove(membership);
+            await _context.SaveChangesAsync();
+        }
+    }
 }
