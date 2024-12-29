@@ -66,14 +66,12 @@
             var membership = new ClubMembership
                 {
                     AthleteId = userId,
-                    AthleteName = user.Name,
-                    AthleteSurname = user.Surname,
                     ClubId = clubId,
                     EndDate = null,
                     StartDate = DateTime.UtcNow,
                     Status = MembershipStatus.Pending
                 };
-            Console.WriteLine($"Athlete: {user}");
+            clubService.UpdateUserClub(user, clubId);
             clubService.AddAthleteMembership(membership);
         }
     }
@@ -87,9 +85,8 @@
                 {
                     CoachId = userId,
                     ClubId = clubId,
-                    CoachName = user.Name,
-                    CoachSurname = user.Surname
                 };
+            clubService.UpdateCoachClub(user, clubCoach);
             clubService.AddCoachToClub(clubCoach);
         }
     }
