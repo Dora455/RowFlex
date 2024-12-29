@@ -1,4 +1,9 @@
 ﻿@implements IDisposable
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
+
+<PageTitle>Authorize Users</PageTitle>
+
 
 @inject NavigationManager NavigationManager
 
@@ -15,12 +20,6 @@
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
             </NavLink>
         </div>
 
@@ -60,6 +59,32 @@
                 </div>
             </NotAuthorized>
         </AuthorizeView>
+        <AuthorizeView Roles="Admin">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="club-coach-management">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Manage Coaches
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="manageClubs">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Manage Clubs
+                </NavLink>
+            </div>
+        </AuthorizeView>
+        <AuthorizeView Roles="Athlete">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="request">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Request Membership
+                </NavLink>
+            </div>
+        </AuthorizeView>
+        <AuthorizeView Roles="Coach">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="authorizeUsers">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Manage Athletes
+                </NavLink>
+            </div>
+        </AuthorizeView>
     </nav>
 </div>
 
@@ -83,4 +108,3 @@
         NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }
-
