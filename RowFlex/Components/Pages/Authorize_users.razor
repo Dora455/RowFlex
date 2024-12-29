@@ -1,7 +1,12 @@
 @page "/authorizeUsers"
 
 @using Microsoft.AspNetCore.Authorization
-
+@using RowFlex.Models
+@using RowFlex.Data
+@inject ClubService clubService
+@inject IHttpContextAccessor HttpContextAccessor
+@rendermode InteractiveServer
+@using System.Security.Claims
 @attribute [Authorize]
 
 <PageTitle>Authorize Users</PageTitle>
@@ -10,14 +15,106 @@
     Hello @context.User.Identity?.Name!
 </AuthorizeView>
 
-<AuthorizeView Roles="Admin">
-    <p>You are an Admin.</p>
-</AuthorizeView>
-
 <AuthorizeView Roles="Coach">
-    <p>You are an Coach.</p>
-</AuthorizeView>
+    <h3>Manage Athletes</h3>
 
-<AuthorizeView Roles="Athlete">
-    <p>Sorry... You don't have permissions for this page.</p>
+    <InputSelect id="Club" class="form-control" @bind-Value="clubId">
+        <option value="">Select a club...</option>
+        @foreach (var club in Clubs)
+        {
+            <option value="@club.Id">@club.Name</option>
+        }
+    </InputSelect>
+    <button class="btn btn-primary mt-2" @onclick="(() => OnClubChange())">Change Club</button>
+
+
 </AuthorizeView>
+@if (SelectedClubId != null)
+{
+    <h2> Members of @SelectedClubName</h2>
+
+    <table class="table table-hover table-striped align-middle">
+    <thead style="background-color: #920697; color: white;">
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="text-center">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var membership in Athletes)
+            {
+                <tr>
+                    <td>@membership.Athlete.Name @membership.Athlete.Surname</td>
+                    <td>
+                        <span class="badge 
+                        @(membership.Status == MembershipStatus.Pending ? "bg-warning text-dark" : "bg-success")">
+                            @membership.Status
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        @if (membership.Status == MembershipStatus.Pending)
+                        {
+                            <button style="background-color: #8e44ad; border: none; margin-right: 10px;" title="Approve Athlete"
+                                class="btn btn-primary" @onclick="(() => ApproveAthlete(membership.Id))">
+                                Accept<i class="bi bi-check-circle"></i>
+                            </button>
+
+                            <button style="background-color: #8e44ad; border: none;" title="Reject Athlete" class="btn btn-primary"
+                    @onclick="(() => RejectAthlete(membership.Id))">
+                    Reject<i class="bi bi-x-circle"></i>
+                </button>
+                        }
+                        else
+                        {
+                            <span class="text-muted">No actions available</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Club> Clubs = new();
+    private List<ClubMembership> Athletes = new();
+    private int? SelectedClubId;
+    private string SelectedClubName;
+    public int clubId;
+    protected override async Task OnInitializedAsync()
+    {
+        var userId = HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        Clubs = clubService.GetClubsForCoach(userId);
+    }
+
+    private async Task OnClubChange()
+    {
+        var club = clubService.GetClubById(clubId);
+        if (club != null)
+        {
+            SelectedClubId = clubId;
+            SelectedClubName = club.Name;
+            Athletes = await clubService.GetAllAthletesForClub(clubId);
+            Console.WriteLine($"Selected Club: {SelectedClubName}, Athletes count: {Athletes.Count}");
+        }
+    }
+
+    private async Task ApproveAthlete(int membershipId)
+    {
+        await clubService.AcceptAthlete(membershipId);
+        if (SelectedClubId != null)
+        {
+            Athletes = await clubService.GetAllAthletesForClub(SelectedClubId.Value);
+        }
+    }
+
+    private async Task RejectAthlete(int membershipId)
+    {
+        await clubService.RejectAthlete(membershipId);
+        if (SelectedClubId != null)
+        {
+            Athletes = await clubService.GetAllAthletesForClub(SelectedClubId.Value);
+        }
+    }
+}
