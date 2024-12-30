@@ -1,0 +1,62 @@
+@page "/training-plans/add"
+@rendermode InteractiveServer
+
+@using RowFlex.Data
+@using RowFlex.Models
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavigationManager
+
+<PageTitle>Add New Training</PageTitle>
+
+<h3>Add New Training</h3>
+
+<EditForm Model="newTrainingModel" OnValidSubmit="HandleNewTrainingSubmit" FormName="addTrainingForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="newTrainingTitle">Training Title:</label>
+        <InputText id="newTrainingTitle" class="form-control" @bind-Value="newTrainingModel.Title" />
+    </div>
+
+    <div class="form-group">
+        <label for="newTrainingType">Training Type:</label>
+        <InputSelect id="newTrainingType" class="form-control" @bind-Value="newTrainingModel.TrainingType">
+            @foreach (var type in Enum.GetValues<ETreningType>())
+            {
+                <option value="@type">@type</option>
+            }
+        </InputSelect>
+    </div>
+
+    <div class="form-group">
+        <label for="trainingDate">Training Date:</label>
+        <InputDate @bind-Value="trainingDate" class="form-control" id="trainingDate" />
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Save and Create Training Plan</button>
+</EditForm>
+
+@code {
+    private Training newTrainingModel = new Training { Saved = true };
+    private DateTime? trainingDate; // Dodanie zmiennej do przechowywania daty
+
+    private async Task HandleNewTrainingSubmit()
+    {
+        // Zapisz nowy trening
+        DbContext.Trainings.Add(newTrainingModel);
+        await DbContext.SaveChangesAsync();
+
+        // Utwórz plan treningowy dla nowego treningu
+        var newTrainingPlan = new TrainingPlan
+        {
+            TrainingId = newTrainingModel.Id,
+            TrainingDate = trainingDate ?? DateTime.Now // Jeśli data nie została wybrana, użyj bieżącej
+        };
+        DbContext.TrainingPlans.Add(newTrainingPlan);
+        await DbContext.SaveChangesAsync();
+
+        // Nawigacja do strony planów treningowych
+        NavigationManager.NavigateTo("/training-plans");
+    }
+}
