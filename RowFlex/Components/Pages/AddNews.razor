@@ -1,0 +1,35 @@
+@page "/AddNews"
+@using RowFlex.Models
+@using RowFlex.Data
+@inject DataBaseService DataBaseService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<h2>Add News</h2>
+<div class="form-group mb-3">
+    <label for="title" class="control-label"> Title </label>
+    <input id="title" class="form-control" @bind="news.Title" />
+</div>
+<div class="form-group mb-3">
+    <label for="description" class="control-label">Description</label>
+    <textarea id="description" class="form-control" @bind="news.Description"></textarea>
+</div>
+
+<button class="btn btn-primary" @onclick="(() => SubmitNews())">
+    Submit<i class="bi bi-check-circle"></i>
+</button>
+
+@code {
+    public News news;
+    protected override async Task OnInitializedAsync()
+    {
+        news = new News();
+    }
+    public async Task SubmitNews()
+    {
+        news.PublishedDate = DateTime.UtcNow;
+
+        await DataBaseService.AddNewsAsync(news);
+        NavigationManager.NavigateTo("/");
+    }
+}

@@ -32,6 +32,8 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<ClubService>();
+builder.Services.AddScoped<DataBaseService>();
 
 var app = builder.Build();
 
@@ -87,7 +89,7 @@ async Task SeedDefaultUserAsync(UserManager<User> userManager, RoleManager<Ident
 
     if (adminUser == null)
     {
-        adminUser = new User { UserName = adminEmail, Email = adminEmail };
+        adminUser = new User { UserName = adminEmail, Email = adminEmail, Role = "Admin" };
         await userManager.CreateAsync(adminUser, "Admin@123"); // Strong password
         await userManager.AddToRoleAsync(adminUser, "Admin");
     }
