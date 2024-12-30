@@ -1,4 +1,4 @@
-@page "/authorizeUsers"
+@page "/manageAthletes"
 
 @using Microsoft.AspNetCore.Authorization
 @using RowFlex.Models
@@ -27,61 +27,117 @@
     </InputSelect>
     <button class="btn btn-primary mt-2" @onclick="(() => OnClubChange())">Change Club</button>
 
-
 </AuthorizeView>
+
 @if (SelectedClubId != null)
 {
-    <h2> Members of @SelectedClubName</h2>
-
-    <table class="table table-hover table-striped align-middle">
-    <thead style="background-color: #920697; color: white;">
-        <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Status</th>
-            <th scope="col" class="text-center">Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var membership in Athletes)
-            {
+    <div class="row">
+    <!-- Pending and Rejected requests on the left -->
+    <div class="col-md-6">
+        <h2> Membership Requests of @SelectedClubName</h2>
+        <table class="table table-hover table-striped align-middle">
+            <thead style="background-color: #920697; color: white;">
                 <tr>
-                    <td>@membership.Athlete.Name @membership.Athlete.Surname</td>
-                    <td>
-                        <span class="badge 
-                        @(membership.Status == MembershipStatus.Pending ? "bg-warning text-dark" : "bg-success")">
-                            @membership.Status
-                        </span>
-                    </td>
-                    <td class="text-center">
-                        @if (membership.Status == MembershipStatus.Pending)
-                        {
-                            <button style="background-color: #8e44ad; border: none; margin-right: 10px;" title="Approve Athlete"
-                                class="btn btn-primary" @onclick="(() => ApproveAthlete(membership.Id))">
-                                Accept<i class="bi bi-check-circle"></i>
-                            </button>
-
-                            <button style="background-color: #8e44ad; border: none;" title="Reject Athlete" class="btn btn-primary"
-                    @onclick="(() => RejectAthlete(membership.Id))">
-                    Reject<i class="bi bi-x-circle"></i>
-                </button>
-                        }
-                        else
-                        {
-                            <span class="text-muted">No actions available</span>
-                        }
-                    </td>
+                    <th scope="col">Name</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" class="text-center">Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var membership in PendingAthletes)
+                    {
+                        <tr>
+                            <td>@membership.Athlete.Name @membership.Athlete.Surname</td>
+                            <td>
+                                <span class="badge bg-warning text-dark">
+                                    @membership.Status
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button style="background-color: #8e44ad; border: none; margin-right: 10px;"
+                                    title="Approve Athlete" class="btn btn-primary"
+                                    @onclick="(() => ApproveAthlete(membership.Id))">
+                                    Accept<i class="bi bi-check-circle"></i>
+                                </button>
+
+                                <button style="background-color: #8e44ad; border: none;" title="Reject Athlete"
+                                    class="btn btn-primary" @onclick="(() => RejectAthlete(membership.Id))">
+                                    Reject<i class="bi bi-x-circle"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var membership in RejectedAthletes)
+                    {
+                        <tr>
+                            <td>@membership.Athlete.Name @membership.Athlete.Surname</td>
+                            <td>
+                                <span class="badge bg-danger text-white">
+                                    @membership.Status
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="text-muted">No actions available</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Accepted members on the right -->
+        <div class="col-md-6">
+            <h2>Accepted Athletes</h2>
+            <table class="table table-hover table-striped align-middle">
+                <thead style="background-color: #920697; color: white;">
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Weight Measurement Required</th>
+                        <th scope="col" class="text-center">Weight Category</th>
+                        <th scope="col" class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var membership in AcceptedAthletes)
+                    {
+                        <tr>
+                            <td>@membership.Athlete.Name @membership.Athlete.Surname</td>
+                            <td>
+                                <button
+                                    class="btn @(membership.Athlete.IsWeightMeasurementRequired ? "btn-success" : "btn-warning")"
+                                    @onclick="(() => ToggleWeightMeasurement(membership.Athlete))">
+                                    @(membership.Athlete.IsWeightMeasurementRequired ? "Required" : "Not Required")
+                                </button>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    @AthleteWeightCategories.GetValueOrDefault(membership.AthleteId, "No measurement")
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-danger" @onclick="(() => DeleteMembership(membership.Id))">
+                                    Delete Membership
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 }
 
 @code {
     private List<Club> Clubs = new();
-    private List<ClubMembership> Athletes = new();
+    private List<ClubMembership> PendingAthletes = new();
+    private List<ClubMembership> AcceptedAthletes = new();
+    private List<ClubMembership> RejectedAthletes = new();
     private int? SelectedClubId;
     private string SelectedClubName;
     public int clubId;
+
+    @* public string category; *@
+    private Dictionary<string, string> AthleteWeightCategories = new();
     protected override async Task OnInitializedAsync()
     {
         var userId = HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -95,8 +151,15 @@
         {
             SelectedClubId = clubId;
             SelectedClubName = club.Name;
-            Athletes = await clubService.GetAllAthletesForClub(clubId);
-            Console.WriteLine($"Selected Club: {SelectedClubName}, Athletes count: {Athletes.Count}");
+
+            var allAthletes = await clubService.GetAllAthletesForClub(clubId);
+            PendingAthletes = allAthletes.Where(a => a.Status == MembershipStatus.Pending).ToList();
+            AcceptedAthletes = allAthletes.Where(a => a.Status == MembershipStatus.Accepted).ToList();
+            RejectedAthletes = allAthletes.Where(a => a.Status == MembershipStatus.Rejected).ToList();
+            foreach (var athlete in AcceptedAthletes)
+            {
+                AthleteWeightCategories[athlete.AthleteId] = await GetAthleteWeightCategoryAsync(athlete.AthleteId);
+            }
         }
     }
 
@@ -105,7 +168,7 @@
         await clubService.AcceptAthlete(membershipId);
         if (SelectedClubId != null)
         {
-            Athletes = await clubService.GetAllAthletesForClub(SelectedClubId.Value);
+            await OnClubChange();
         }
     }
 
@@ -114,7 +177,37 @@
         await clubService.RejectAthlete(membershipId);
         if (SelectedClubId != null)
         {
-            Athletes = await clubService.GetAllAthletesForClub(SelectedClubId.Value);
+            await OnClubChange();
+        }
+    }
+
+    private async Task DeleteMembership(int membershipId)
+    {
+        await clubService.RejectAthlete(membershipId);
+        if (SelectedClubId != null)
+        {
+            await OnClubChange();
+        }
+    }
+    private async Task<string> GetAthleteWeightCategoryAsync(string athleteId)
+    {
+        var latestWeight = await clubService.GetLatestWeightMeasurement(athleteId);
+        if (latestWeight != null)
+        {
+            var athlete = clubService.GetUserById(athleteId);
+            return clubService.GetWeightCategory(athlete, latestWeight.Weight);
+        }
+
+        else
+            return "No measurement";
+    }
+    private async Task ToggleWeightMeasurement(User athlete)
+    {
+        athlete.IsWeightMeasurementRequired = !athlete.IsWeightMeasurementRequired;
+        await clubService.UpdateAthlete(athlete);
+        if (SelectedClubId != null)
+        {
+            await OnClubChange();
         }
     }
 }

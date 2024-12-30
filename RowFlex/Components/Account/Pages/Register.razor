@@ -65,7 +65,13 @@
     </InputSelect>
     <label for="role">Role</label>
 </div>
-
+<div class="form-floating mb-3">
+    <InputSelect id="role" class="form-control" @bind-Value="Input.Gender">
+        <option value="@EGender.Female">Female</option>
+        <option value="@EGender.Male">Male</option>
+    </InputSelect>
+    <label for="role">Gender</label>
+</div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
         </EditForm>
     </div>
@@ -101,6 +107,7 @@
 
         user.Name = Input.Name;
         user.Surname = Input.Surname;
+        user.Gender = Input.Gender;
         user.Role = Input.SelectedRole;
         await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
         var emailStore = GetEmailStore();
@@ -185,7 +192,7 @@
 
         [Required]
         [Display(Name = "Role")]
-        public string SelectedRole { get; set; } = "Athlete";  // Default value (could be any role)
-        
+        public string SelectedRole { get; set; } = "Athlete";
+        public EGender Gender { get; set; } 
     }
 }

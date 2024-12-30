@@ -1,0 +1,64 @@
+@page "/manage-weight"
+@using RowFlex.Models
+@inject IHttpContextAccessor HttpContextAccessor
+@inject ClubService clubService
+@inject DataBaseService dataBaseService
+@using System.Security.Claims
+@rendermode InteractiveServer
+
+<h3>Dodaj pomiar wagi</h3>
+
+
+<div class="form-group">
+    <label for="weight">Waga:</label>
+    <InputNumber id="weight" class="form-control" @bind-Value="weightMeasurement.Weight" />
+</div>
+
+<div class="form-group">
+    <label for="date">Data pomiaru:</label>
+    <InputDate id="date" class="form-control" @bind-Value="weightMeasurement.Date" />
+</div>
+
+<button class="btn btn-primary" @onclick="(() => Submit())">
+    Submit<i class="bi bi-check-circle"></i>
+</button>
+
+<h4>Starsze pomiary wagi</h4>
+@if (previousMeasurements != null && previousMeasurements.Any())
+{
+    <ul class="list-group">
+    @foreach (var measurement in previousMeasurements)
+        {
+            <li class="list-group-item">
+                <strong>Waga:</strong> @measurement.Weight kg
+                <br />
+                <strong>Data:</strong> @measurement.Date.ToString("yyyy-MM-dd")
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>Brak wcześniejszych pomiarów.</p>
+}
+
+@code {
+    private WeightMeasurement weightMeasurement = new WeightMeasurement();
+    private List<WeightMeasurement> previousMeasurements = new List<WeightMeasurement>();
+
+    public string userId;
+    public User user;
+    protected override async Task OnInitializedAsync()
+    {
+        userId = HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        user = clubService.GetUserById(userId);
+        previousMeasurements = await dataBaseService.GetWeightMeasurementsForUser(userId);
+
+    }
+    private async Task Submit()
+    {
+        weightMeasurement.AthleteId = userId;
+        await dataBaseService.AddWeightMeasurement(weightMeasurement);
+        previousMeasurements = await dataBaseService.GetWeightMeasurementsForUser(userId);
+    }
+}

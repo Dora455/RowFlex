@@ -1,5 +1,10 @@
 ﻿@implements IDisposable
+@using RowFlex.Models
+@inject IHttpContextAccessor HttpContextAccessor
+@inject ClubService clubService
+@using System.Security.Claims
 @attribute [Authorize]
+
 @using Microsoft.AspNetCore.Authorization
 
 <PageTitle>Authorize Users</PageTitle>
@@ -77,10 +82,18 @@
                     <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Request Membership
                 </NavLink>
             </div>
+            @if (user?.IsWeightMeasurementRequired == true)
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="manage-weight">
+                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Manage Weight
+                    </NavLink>
+                </div>
+            }
         </AuthorizeView>
         <AuthorizeView Roles="Coach">
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="authorizeUsers">
+                <NavLink class="nav-link" href="manageAthletes">
                     <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Manage Athletes
                 </NavLink>
                 <NavLink class="nav-link" href="AddNews">
@@ -96,11 +109,13 @@
 
 @code {
     private string? currentUrl;
-
+    public User? user;
     protected override void OnInitialized()
     {
         currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         NavigationManager.LocationChanged += OnLocationChanged;
+        var userId = HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        user = clubService.GetUserById(userId);
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)

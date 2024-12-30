@@ -44,4 +44,16 @@ public class DataBaseService
         _context.News.Add(news);
         await _context.SaveChangesAsync();
     }
+    public async Task AddWeightMeasurement(WeightMeasurement weight)
+    {
+        _context.WeightMeasurements.Add(weight);
+        await _context.SaveChangesAsync();
+    }
+    public async Task<List<WeightMeasurement>> GetWeightMeasurementsForUser(string userId)
+    {
+        return await _context.WeightMeasurements
+            .Where(wm => wm.AthleteId == userId)
+            .OrderByDescending(wm => wm.Date)
+            .ToListAsync();
+    }
 }

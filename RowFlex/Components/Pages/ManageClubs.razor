@@ -48,35 +48,30 @@
 @code {
     public string ClubName { get; set; }
     public List<Club> Clubs { get; set; } = new List<Club>();
-
-    // Load clubs when the page loads
     protected override async Task OnInitializedAsync()
     {
         await LoadClubs();
     }
 
-    // Fetch clubs from the service
     private async Task LoadClubs()
     {
         Clubs = await clubService.GetAllClubsAsync();
     }
 
-    // Add a new club
     public async Task AddClub()
     {
         if (!string.IsNullOrWhiteSpace(ClubName))
         {
             var club = new Club { Name = ClubName };
             await clubService.AddNewClub(club);
-            ClubName = string.Empty; // Clear the input field after adding
-            await LoadClubs(); // Reload the list of clubs
+            ClubName = string.Empty;
+            await LoadClubs();
         }
     }
 
-    // Delete a club
     public async Task DeleteClub(int clubId)
     {
         await clubService.RemoveClubAsync(clubId);
-        await LoadClubs(); // Reload the list after deletion
+        await LoadClubs();
     }
 }

@@ -39,11 +39,11 @@ else
 
     <h2>Add New Club-Coach</h2>
     <EditForm Model="NewClubCoach" OnValidSubmit="AddClubCoach">
-    <div class="form-group">
-        <label for="ClubId">Select Club</label>
-        <InputSelect id="ClubId" @bind-Value="NewClubCoach.ClubId" class="form-control">
-            <option value="">-- Select Club --</option>
-            @foreach (var club in Clubs)
+        <div class="form-group">
+            <label for="ClubId">Select Club</label>
+            <InputSelect id="ClubId" @bind-Value="NewClubCoach.ClubId" class="form-control">
+                <option value="">-- Select Club --</option>
+                @foreach (var club in Clubs)
                 {
                     <option value="@club.Id">@club.Name</option>
                 }
@@ -87,7 +87,7 @@ else
     {
         if (NewClubCoach.ClubId == 0 || string.IsNullOrEmpty(NewClubCoach.CoachId))
         {
-            return; // Validation check
+            return;
         }
 
         await clubService.AddCoachToClubAsync(NewClubCoach);
