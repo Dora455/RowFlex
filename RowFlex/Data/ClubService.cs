@@ -93,6 +93,12 @@ public class ClubService
         user.ClubId = clubId; // Assign coach to the club
         await _context.SaveChangesAsync();
     }
+    public async Task UpdateAthlete(User user)
+    {
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task UpdateCoachClub(User user, ClubCoach clubCoach)
     {
         var tmp = user.ClubsAsCoach;
@@ -157,5 +163,33 @@ public class ClubService
             _context.ClubMemberships.Remove(membership);
             await _context.SaveChangesAsync();
         }
+    }
+
+    public async Task<WeightMeasurement> GetLatestWeightMeasurement(string athleteId)
+    {
+        return await _context.WeightMeasurements
+            .Where(w => w.AthleteId == athleteId)
+            .OrderByDescending(w => w.Date)
+            .FirstOrDefaultAsync();
+    }
+
+    public string GetWeightCategory(User user, double weight)
+    {
+        if (user.Gender == EGender.Female)
+        {
+            if (weight <= 57.5)
+                return "Light Weight";
+            else
+                return "Open Weight";
+        }
+        else if (user.Gender == EGender.Male)
+        {
+            if (weight <= 72.5)
+                return "Light Weight";
+            else
+                return "Open Weight";
+        }
+        else
+            return "Not gender specified";
     }
 }

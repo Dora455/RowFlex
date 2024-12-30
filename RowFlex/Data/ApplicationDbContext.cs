@@ -13,4 +13,5 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<ClubCoach> ClubCoaches { get; set; }
     public DbSet<Event> Events { get; set; }
     public DbSet<News> News { get; set; }
+    public DbSet<WeightMeasurement> WeightMeasurements { get; set; }
 }
