@@ -1,0 +1,77 @@
+@page "/manageClubs"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject ClubService clubService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims
+@using RowFlex.Models
+
+<AuthorizeView>
+    Hello @context.User.Identity?.Name!
+</AuthorizeView>
+
+<PageTitle>Manage Clubs</PageTitle>
+
+<AuthorizeView Roles="Admin">
+    <h2>Manage Clubs</h2>
+
+    <div>
+        <label for="clubName">Club Name:</label>
+        <input type="text" id="clubName" @bind="ClubName" placeholder="Enter club name" />
+    </div>
+
+    <button class="btn btn-primary mt-2" @onclick="AddClub">Add Club</button>
+
+    <h3 class="mt-3">Existing Clubs</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var club in Clubs)
+            {
+                <tr>
+                    <td>@club.Name</td>
+                    <td>
+                        <button class="btn btn-danger" @onclick="(() => DeleteClub(club.Id))">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</AuthorizeView>
+
+@code {
+    public string ClubName { get; set; }
+    public List<Club> Clubs { get; set; } = new List<Club>();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadClubs();
+    }
+
+    private async Task LoadClubs()
+    {
+        Clubs = await clubService.GetAllClubsAsync();
+    }
+
+    public async Task AddClub()
+    {
+        if (!string.IsNullOrWhiteSpace(ClubName))
+        {
+            var club = new Club { Name = ClubName };
+            await clubService.AddNewClub(club);
+            ClubName = string.Empty;
+            await LoadClubs();
+        }
+    }
+
+    public async Task DeleteClub(int clubId)
+    {
+        await clubService.RemoveClubAsync(clubId);
+        await LoadClubs();
+    }
+}

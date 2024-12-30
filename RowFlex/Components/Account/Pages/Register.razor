@@ -3,11 +3,14 @@
 @using System.ComponentModel.DataAnnotations
 @using System.Text
 @using System.Text.Encodings.Web
+@using System;
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.AspNetCore.Components
 @using RowFlex.Data
 @using RowFlex.Models
 
+@inject ClubService clubService
 @inject UserManager<User> UserManager
 @inject IUserStore<User> UserStore
 @inject SignInManager<User> SignInManager
@@ -28,6 +31,16 @@
             <DataAnnotationsValidator />
             <h2>Create a new account.</h2>
             <hr />
+             <div class="form-floating mb-3">
+    <InputText @bind-Value="Input.Name" class="form-control" placeholder="First Name" aria-required="true" />
+    <label for="name">First Name</label>
+    <ValidationMessage For="() => Input.Name" class="text-danger" />
+</div>
+<div class="form-floating mb-3">
+    <InputText @bind-Value="Input.Surname" class="form-control" placeholder="Last Name" aria-required="true" />
+    <label for="surname">Last Name</label>
+    <ValidationMessage For="() => Input.Surname" class="text-danger" />
+</div>
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
                 <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
@@ -46,12 +59,19 @@
             </div>
             <div class="form-floating mb-3">
     <InputSelect id="role" class="form-control" @bind-Value="Input.SelectedRole">
-        <option value="Coach">Coach</option>
         <option value="Athlete">Athlete</option>
+        <option value="Coach">Coach</option>
+        <option value="Admin">Admin</option>
     </InputSelect>
     <label for="role">Role</label>
 </div>
-
+<div class="form-floating mb-3">
+    <InputSelect id="role" class="form-control" @bind-Value="Input.Gender">
+        <option value="@EGender.Female">Female</option>
+        <option value="@EGender.Male">Male</option>
+    </InputSelect>
+    <label for="role">Gender</label>
+</div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
         </EditForm>
     </div>
@@ -74,11 +94,21 @@
     private string? ReturnUrl { get; set; }
 
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
+    private List<Club> Clubs { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Clubs = await clubService.GetAllClubsAsync();
+    }
 
     public async Task RegisterUser(EditContext editContext)
     {
         var user = CreateUser();
 
+        user.Name = Input.Name;
+        user.Surname = Input.Surname;
+        user.Gender = Input.Gender;
+        user.Role = Input.SelectedRole;
         await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
         var emailStore = GetEmailStore();
         await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
@@ -88,30 +118,27 @@
         {
             identityErrors = result.Errors;
             return;
-        }
-
-        Logger.LogInformation("User created a new account with password.");
-
-        // Assign the selected role to the user
-        await UserManager.AddToRoleAsync(user, Input.SelectedRole);
-
+        }         
+        Logger.LogInformation("User created a new account with password.");      
+        await UserManager.AddToRoleAsync(user, Input.SelectedRole);        
         var userId = await UserManager.GetUserIdAsync(user);
         var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
         code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
         var callbackUrl = NavigationManager.GetUriWithQueryParameters(
             NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
             new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
-
-        await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
-
+       
+        await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));   
         if (UserManager.Options.SignIn.RequireConfirmedAccount)
         {
+   
             RedirectManager.RedirectTo(
                 "Account/RegisterConfirmation",
                 new() { ["email"] = Input.Email, ["returnUrl"] = ReturnUrl });
+                
         }
-
         await SignInManager.SignInAsync(user, isPersistent: false);
+       
         RedirectManager.RedirectTo(ReturnUrl);
     }
 
@@ -140,6 +167,14 @@
     private sealed class InputModel
     {
         [Required]
+        [Display(Name = "First Name")]
+        public string Name { get; set; } = "";
+
+        [Required]
+        [Display(Name = "Last Name")]
+        public string Surname { get; set; } = "";
+    
+        [Required]
         [EmailAddress]
         [Display(Name = "Email")]
         public string Email { get; set; } = "";
@@ -157,6 +192,7 @@
 
         [Required]
         [Display(Name = "Role")]
-        public string SelectedRole { get; set; } = "Coach";  // Default value (could be any role)
+        public string SelectedRole { get; set; } = "Athlete";
+        public EGender Gender { get; set; } 
     }
 }

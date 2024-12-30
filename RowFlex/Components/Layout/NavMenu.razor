@@ -1,4 +1,14 @@
 ﻿@implements IDisposable
+@using RowFlex.Models
+@inject IHttpContextAccessor HttpContextAccessor
+@inject ClubService clubService
+@using System.Security.Claims
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+
+<PageTitle>Authorize Users</PageTitle>
+
 
 @inject NavigationManager NavigationManager
 
@@ -72,16 +82,58 @@
                 </div>
             </NotAuthorized>
         </AuthorizeView>
+        <AuthorizeView Roles="Admin">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="club-coach-management">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Manage Coaches
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="manageClubs">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Manage Clubs
+                </NavLink>
+            </div>
+        </AuthorizeView>
+        <AuthorizeView Roles="Athlete">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="request">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Request Membership
+                </NavLink>
+            </div>
+            @if (user?.IsWeightMeasurementRequired == true)
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="manage-weight">
+                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Manage Weight
+                    </NavLink>
+                </div>
+            }
+        </AuthorizeView>
+        <AuthorizeView Roles="Coach">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="manageAthletes">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Manage Athletes
+                </NavLink>
+                <NavLink class="nav-link" href="AddNews">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add News
+                </NavLink>
+                <NavLink class="nav-link" href="AddEvent">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add Event
+                </NavLink>
+            </div>
+        </AuthorizeView>
     </nav>
 </div>
 
 @code {
     private string? currentUrl;
-
+    public User? user;
     protected override void OnInitialized()
     {
         currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         NavigationManager.LocationChanged += OnLocationChanged;
+        var userId = HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        user = clubService.GetUserById(userId);
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
