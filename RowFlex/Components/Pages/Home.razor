@@ -1,7 +1,75 @@
 ﻿@page "/"
+@using RowFlex.Models
+@using RowFlex.Data
+@inject DataBaseService DataBaseService
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Welcome to the RowFlex!</h1>
 
-Welcome to your new app.
+<div class="row">
+    <!-- News Section -->
+    <div class="col-md-8">
+        <h2>News</h2>
+        @if (NewsList == null)
+        {
+            <p>Loading news...</p>
+        }
+        else if (!NewsList.Any())
+        {
+            <p>No news available.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var news in NewsList)
+                {
+                    <li class="list-group-item">
+                        <h5>@news.Title</h5>
+                        <p>@news.Description</p>
+                        <small><i>Published on: @news.PublishedDate.ToString("MMM dd, yyyy")</i></small>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+
+    <!-- Calendar Section -->
+    <div class="col-md-4">
+        <h2>Event Calendar</h2>
+        @if (EventList == null)
+        {
+            <p>Loading events...</p>
+        }
+        else if (!EventList.Any())
+        {
+            <p>No events available.</p>
+        }
+        else
+        {
+            <div class="list-group">
+                @foreach (var eventItem in EventList)
+                {
+                    <div class="list-group-item">
+                        <strong>@eventItem.Title</strong>
+                        <br />
+                        <small>From: @eventItem.StartDate.ToString("MMM dd, yyyy hh:mm tt")</small><br />
+                        <small>To: @eventItem.EndDate.ToString("MMM dd, yyyy hh:mm tt")</small>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<News> NewsList { get; set; }
+    private List<Event> EventList { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch the news and events from the database
+        NewsList = await DataBaseService.GetAllNewsAsync();
+        EventList = await DataBaseService.GetAllEventsAsync();
+    }
+}
