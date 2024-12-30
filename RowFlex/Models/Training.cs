@@ -10,4 +10,7 @@ public class Training
 
     [Required] public bool Saved { get; set; } = true;
 
+    [Required] 
+    public ETreningType TrainingType { get; set; }
+
 }

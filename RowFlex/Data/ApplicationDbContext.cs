@@ -9,4 +9,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Club> Clubs { get; set; }
     public DbSet<ClubMembership> ClubMemberships { get; set; }
     public DbSet<ClubCoach> ClubCoaches { get; set; }
+    public DbSet<Training> Trainings { get; set; } 
+    public DbSet<TrainingPlan> TrainingPlans { get; set; } 
+
 }

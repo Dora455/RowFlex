@@ -1,0 +1,45 @@
+@page "/trainings/add"
+
+@rendermode InteractiveServer
+
+@using RowFlex.Models
+@using RowFlex.Data
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavigationManager
+
+<PageTitle>Add Training</PageTitle>
+
+<h3>Add Trainiing</h3>
+
+<EditForm Model="newTrainingModel" OnValidSubmit="HandleValidSubmit" FormName="addTrainingForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="title">Training Title:</label>
+        <InputText id="title" class="form-control" @bind-Value="newTrainingModel.Title" />
+    </div>
+
+    <div class="form-group">
+        <label for="type">Training Type:</label>
+        <InputSelect id="type" class="form-control" @bind-Value="newTrainingModel.TrainingType">
+            @foreach (var type in Enum.GetValues<ETreningType>())
+            {
+                <option value="@type">@type</option>
+            }
+        </InputSelect>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Save</button>
+</EditForm>
+
+@code {
+    private Training newTrainingModel = new Training { Saved = true };
+
+    private async Task HandleValidSubmit()
+    {
+        DbContext.Trainings.Add(newTrainingModel);
+        await DbContext.SaveChangesAsync();
+        NavigationManager.NavigateTo("/trainings");
+    }
+}
