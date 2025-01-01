@@ -1,0 +1,53 @@
+@page "/training-plans/{planId}"
+
+@using RowFlex.Data
+@using RowFlex.Models
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Training Plan Details</PageTitle>
+
+<h3>@training?.Training?.Title</h3>
+<p>Training Date: @training?.TrainingDate.ToString("MMM dd, yyyy")</p>
+
+@if (isCoachOrAdmin)
+{
+    <h4>Signed Up Athletes</h4>
+    <ul>
+        @foreach (var presence in presences)
+        {
+            <li>@presence.User?.UserName</li>
+        }
+    </ul>
+}
+
+@code {
+    [Parameter] public int PlanId { get; set; }
+    private TrainingPlan training; // Changed from Training to TrainingPlan
+    private List<Presence> presences;
+    private bool isCoachOrAdmin = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get the training plan and include the related training details
+        training = await DbContext.TrainingPlans
+            .Include(tp => tp.Training) // Include Training details
+            .FirstOrDefaultAsync(t => t.Id == PlanId);
+
+        // Check if the user is a coach or admin
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        isCoachOrAdmin = user.IsInRole("Coach") || user.IsInRole("Admin");
+
+        // If the user is a coach or admin, load the list of presences
+        if (isCoachOrAdmin)
+        {
+            presences = await DbContext.Presences
+                .Include(p => p.User) // Include User details to display username
+                .Where(p => p.TrainingId == training.TrainingId) // Use trainingId from TrainingPlan
+                .ToListAsync();
+        }
+    }
+}

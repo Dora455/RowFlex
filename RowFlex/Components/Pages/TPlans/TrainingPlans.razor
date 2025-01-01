@@ -1,0 +1,136 @@
+@page "/training-plans"
+@rendermode InteractiveServer
+
+@using Microsoft.EntityFrameworkCore
+@using RowFlex.Data
+@using RowFlex.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavigationManager
+
+<PageTitle>Training Plans</PageTitle>
+
+<h3>Training Plans</h3>
+
+<div class="row">
+    <!-- Existing Training Plans Section -->
+    <div class="col-md-8">
+        <h4>Existing Training Plans</h4>
+        @if (trainingPlans == null)
+        {
+            <p>Loading training plans...</p>
+        }
+        else if (!trainingPlans.Any())
+        {
+            <p>No training plans available.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var plan in trainingPlans)
+                {
+                    <li class="list-group-item">
+                        <h5>@plan.Training?.Title</h5>
+                        <p>Scheduled Date: @plan.TrainingDate.ToString("MMM dd, yyyy")</p>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+
+    <!-- Add Training Section (Visible only for Coach or Admin roles) -->
+    @if (IsAuthorized)
+    {
+        <div class="col-md-4">
+            <h4>Add a Training Plan</h4>
+            <div class="mb-3">
+                <button class="btn btn-secondary w-100" @onclick="ShowExistingTrainings">Add Existing Training</button>
+            </div>
+            @if (isExistingTrainingsVisible)
+            {
+                <div>
+                    <select @bind="selectedTrainingId" class="form-control">
+                        <option value="">-- Select a Training --</option>
+                        @foreach (var training in trainings)
+                        {
+                            <option value="@training.Id">@training.Title</option>
+                        }
+                    </select>
+                    <div class="mt-3">
+                        <label for="trainingDate">Training Date:</label>
+                        <InputDate @bind-Value="trainingDate" class="form-control" id="trainingDate" />
+                    </div>
+                    <button class="btn btn-primary mt-3" @onclick="AddSelectedTrainingPlan">Add to Training Plan</button>
+                </div>
+            }
+        </div>
+    }
+
+</div>
+
+@code {
+    private List<Training> trainings = new();
+    private List<TrainingPlan> trainingPlans = new();
+    private int selectedTrainingId;
+    private DateTime? trainingDate;
+    private bool isExistingTrainingsVisible = false;
+    private bool IsAuthorized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load training plans from the database
+        trainingPlans = await DbContext.TrainingPlans
+            .Include(tp => tp.Training)
+            .ToListAsync();
+
+        // Get the current user's authentication state
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        // Check if the user has the "Coach" or "Admin" role
+        IsAuthorized = user.IsInRole("Coach") || user.IsInRole("Admin");
+
+        // Load available trainings only for authorized users
+        if (IsAuthorized)
+        {
+            trainings = await DbContext.Trainings.ToListAsync();
+        }
+    }
+
+    // Toggle visibility of the existing trainings section
+    private void ShowExistingTrainings()
+    {
+        isExistingTrainingsVisible = !isExistingTrainingsVisible;
+    }
+
+    // Add the selected training plan to the database
+    private async Task AddSelectedTrainingPlan()
+    {
+        if (selectedTrainingId != 0 && trainingDate.HasValue)
+        {
+            var training = await DbContext.Trainings.FindAsync(selectedTrainingId);
+            if (training != null)
+            {
+                var newTrainingPlan = new TrainingPlan
+                {
+                    TrainingId = training.Id,
+                    TrainingDate = trainingDate.Value
+                };
+                DbContext.TrainingPlans.Add(newTrainingPlan);
+                await DbContext.SaveChangesAsync();
+
+                // Refresh the training plans list
+                trainingPlans = await DbContext.TrainingPlans
+                    .Include(tp => tp.Training)
+                    .ToListAsync();
+            }
+        }
+    }
+
+    // Navigate to the page for adding a new training
+    private void NavigateToAddTrainingPage()
+    {
+        NavigationManager.NavigateTo("/training-plans/add");
+    }
+}
