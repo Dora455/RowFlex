@@ -10,6 +10,8 @@ public class Training
 
     [Required] public bool Saved { get; set; } = true;
 
+    public string Description { get; set; }
+
     [Required]
     public ETreningType TrainingType { get; set; } = ETreningType.Ergometer;
 }

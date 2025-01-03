@@ -30,9 +30,21 @@
             <ul class="list-group">
                 @foreach (var plan in trainingPlans)
                 {
-                    <li class="list-group-item">
-                        <h5>@plan.Training?.Title</h5>
-                        <p>Scheduled Date: @plan.TrainingDate.ToString("MMM dd, yyyy")</p>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5>@plan.Training?.Title</h5>
+                            <p>Scheduled Date: @plan.TrainingDate.ToString("MMM dd, yyyy")</p>
+                        </div>
+                        <div>
+                            <!-- Button for signing up -->
+                            <button class="btn btn-primary me-2" @onclick="() => NavigateToSignUp(plan.Id)">Sign Up</button>
+                            
+                            <!-- Button for coaches and admins to see participants -->
+                            @if (IsAuthorized)
+                            {
+                                <button class="btn btn-info" @onclick="() => NavigateToPlanDetails(plan.Id)">View Participants</button>
+                            }
+                        </div>
                     </li>
                 }
             </ul>
@@ -71,7 +83,6 @@
             </div>
         </div>
     }
-
 </div>
 
 @code {
@@ -131,6 +142,18 @@
                     .ToListAsync();
             }
         }
+    }
+
+    // Navigate to the page for signing up
+    private void NavigateToSignUp(int planId)
+    {
+        NavigationManager.NavigateTo($"/training-plans/{planId}/signup");
+    }
+
+    // Navigate to the page for viewing participants
+    private void NavigateToPlanDetails(int planId)
+    {
+        NavigationManager.NavigateTo($"/training-plans/{planId}/details");
     }
 
     // Navigate to the page for adding a new training
