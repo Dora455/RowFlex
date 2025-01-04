@@ -9,8 +9,9 @@ using RowFlex.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+//Training services
 builder.Services.AddScoped<TrainingService>();
+builder.Services.AddScoped<PresenceService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

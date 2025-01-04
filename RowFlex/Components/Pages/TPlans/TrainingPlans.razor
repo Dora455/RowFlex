@@ -8,6 +8,8 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavigationManager
+@inject IHttpContextAccessor HttpContextAccessor
+@using System.Security.Claims
 
 <PageTitle>Training Plans</PageTitle>
 
@@ -37,7 +39,7 @@
                         </div>
                         <div>
                             <!-- Button for signing up -->
-                            <button class="btn btn-primary me-2" @onclick="() => NavigateToSignUp(plan.Id)">Sign Up</button>
+                            <button class="btn btn-primary me-2" @onclick="() => SignUp(plan.Id)">Sign Up</button>
                             
                             <!-- Button for coaches and admins to see participants -->
                             @if (IsAuthorized)
@@ -95,23 +97,45 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Load training plans from the database
-        trainingPlans = await DbContext.TrainingPlans
-            .Include(tp => tp.Training)
-            .ToListAsync();
-
-        // Get the current user's authentication state
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        // Check if the user has the "Coach" or "Admin" role
-        IsAuthorized = user.IsInRole("Coach") || user.IsInRole("Admin");
-
-        // Load available trainings only for authorized users
+        await LoadTrainingPlans();
+        await CheckUserAuthorization();
         if (IsAuthorized)
+        {
+            await LoadTrainings();
+        }
+    }
+
+    private async Task LoadTrainingPlans()
+    {
+        try
+        {
+            trainingPlans = await DbContext.TrainingPlans
+                .Include(tp => tp.Training)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading training plans: {ex.Message}");
+        }
+    }
+
+    private async Task LoadTrainings()
+    {
+        try
         {
             trainings = await DbContext.Trainings.ToListAsync();
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading trainings: {ex.Message}");
+        }
+    }
+
+    private async Task CheckUserAuthorization()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        IsAuthorized = user.IsInRole("Coach") || user.IsInRole("Admin");
     }
 
     // Toggle visibility of the existing trainings section
@@ -125,21 +149,26 @@
     {
         if (selectedTrainingId != 0 && trainingDate.HasValue)
         {
-            var training = await DbContext.Trainings.FindAsync(selectedTrainingId);
-            if (training != null)
+            try
             {
-                var newTrainingPlan = new TrainingPlan
+                var training = await DbContext.Trainings.FindAsync(selectedTrainingId);
+                if (training != null)
                 {
-                    TrainingId = training.Id,
-                    TrainingDate = trainingDate.Value
-                };
-                DbContext.TrainingPlans.Add(newTrainingPlan);
-                await DbContext.SaveChangesAsync();
+                    var newTrainingPlan = new TrainingPlan
+                    {
+                        TrainingId = training.Id,
+                        TrainingDate = trainingDate.Value
+                    };
+                    DbContext.TrainingPlans.Add(newTrainingPlan);
+                    await DbContext.SaveChangesAsync();
 
-                // Refresh the training plans list
-                trainingPlans = await DbContext.TrainingPlans
-                    .Include(tp => tp.Training)
-                    .ToListAsync();
+                    // Refresh the training plans list
+                    await LoadTrainingPlans();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding training plan: {ex.Message}");
             }
         }
     }
@@ -160,5 +189,40 @@
     private void NavigateToAddTrainingPage()
     {
         NavigationManager.NavigateTo("/training-plans/add");
+    }
+    
+    // Sign up the current user for the training plan
+    private async Task SignUp(int planId)
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId != null)
+        {
+            try
+            {
+                var presence = new Presence
+                {
+                    UserId = userId,
+                    TrainingPlanId = planId,
+                    Date = DateTime.Now
+                };
+
+                DbContext.Presences.Add(presence);
+                await DbContext.SaveChangesAsync();
+
+                // Optionally, redirect after sign-up
+                NavigationManager.NavigateTo($"/training-plans/{planId}/signup");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while signing up: {ex.Message}");
+            }
+        }
+        else
+        {
+            Console.WriteLine("Sign-up failed: userId is null.");
+        }
     }
 }

@@ -1,87 +1,129 @@
-@page "/training-plans/{planId}/signup"
+@page "/training-plans/{planId:int}/signup"
+
 @using RowFlex.Data
 @using RowFlex.Models
-@using Microsoft.EntityFrameworkCore
-@using System.Security.Claims
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
 
-<PageTitle>Sign up for Training</PageTitle>
+<PageTitle>Sign Up</PageTitle>
 
-<h3>Sign up for Training</h3>
+<h3>Sign Up for Training</h3>
 
-@if (!canSignUp)
-{
-    <p>You cannot sign up for a training session that has already passed.</p>
-}
-else
-{
-    <button class="btn btn-primary" @onclick="SignUpForTraining">Sign Up</button>
-}
+<div>
+    @if (trainingPlan != null && trainingPlan.Training != null)
+    {
+        <h4>@trainingPlan.Training.Title</h4>
+        <p>Scheduled Date: @trainingPlan.TrainingDate.ToString("MMM dd, yyyy")</p>
+
+        <h5>Participants</h5>
+        @if (participants == null || !participants.Any())
+        {
+            <p>No participants yet.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var participant in participants)
+                {
+                    <li class="list-group-item">@participant.User?.Name @participant.User?.Surname</li>
+                }
+            </ul>
+        }
+
+        <!-- Button to sign up -->
+        <button class="btn btn-primary" @onclick="SignUp">Sign Up</button>
+    }
+    else
+    {
+        <p>Loading...</p>
+    }
+</div>
 
 @code {
-    [Parameter] public int PlanId { get; set; }
+    [Parameter] public int planId { get; set; }
+
     private TrainingPlan trainingPlan;
-    private bool canSignUp = false;
+    private List<Presence> participants;
 
     protected override async Task OnInitializedAsync()
     {
-        // Fetch the TrainingPlan by its Id
-        trainingPlan = await DbContext.TrainingPlans
-            .Include(tp => tp.Training) // Make sure to include the related Training if needed
-            .FirstOrDefaultAsync(tp => tp.Id == PlanId);
+        await LoadTrainingPlan();
+    }
 
-        if (trainingPlan != null)
+    private async Task LoadTrainingPlan()
+    {
+        trainingPlan = null;
+        participants = new List<Presence>();
+
+        try
         {
-            // Check if the training session is today or in the future
-            canSignUp = trainingPlan.TrainingDate >= DateTime.Now;
+            trainingPlan = await DbContext.TrainingPlans
+                .Include(tp => tp.Training)
+                .FirstOrDefaultAsync(tp => tp.Id == planId);
+
+            if (trainingPlan != null)
+            {
+                participants = await DbContext.Presences
+                    .Where(p => p.TrainingPlanId == planId)
+                    .Include(p => p.User)
+                    .ToListAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while loading the training plan: {ex.Message}");
         }
     }
 
-    private async Task SignUpForTraining()
+    private async Task SignUp()
     {
-        if (trainingPlan == null || !canSignUp)
-        {
-            return;
-        }
-
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (user != null && user.Identity.IsAuthenticated)
+        // Log userId and trainingPlan
+        Console.WriteLine($"UserId: {userId}");
+        Console.WriteLine($"TrainingPlanId: {trainingPlan?.Id}");
+
+        if (userId != null && trainingPlan != null)
         {
-            var userIdString = user.FindFirstValue(ClaimTypes.NameIdentifier); // Get the string userId
-
-            if (!string.IsNullOrEmpty(userIdString)) // Ensure userIdString is not empty
+            var presence = new Presence
             {
-                // Check if the user is already signed up for the training
-                var existingPresence = await DbContext.Presences
-                    .FirstOrDefaultAsync(p => p.UserId == userIdString && p.TrainingId == trainingPlan.TrainingId);
+                UserId = userId,
+                TrainingPlanId = trainingPlan.Id,
+                Date = DateTime.Now
+            };
 
-                if (existingPresence == null)
-                {
-                    var presence = new Presence
-                    {
-                        UserId = userIdString, // Store userId as string
-                        TrainingId = trainingPlan.TrainingId,
-                        Date = DateTime.Now
-                    };
-
-                    DbContext.Presences.Add(presence);
-                    await DbContext.SaveChangesAsync();
-                    NavigationManager.NavigateTo($"/training-plans/{PlanId}");
-                }
-                else
-                {
-                    // Handle already signed up case
-                    // Show a message or do something here
-                }
-            }
-            else
+            try
             {
-                // Handle case where userIdString is null or empty
+                // Add the new presence to the DbContext
+                DbContext.Presences.Add(presence);
+
+                // Save changes to the database
+                await DbContext.SaveChangesAsync();
+
+                // Log success message
+                Console.WriteLine("Sign-up successful!");
+
+                // Refresh the participants list
+                participants = await DbContext.Presences
+                    .Where(p => p.TrainingPlanId == planId)
+                    .Include(p => p.User)
+                    .ToListAsync();
             }
+            catch (Exception ex)
+            {
+                // Log any errors that occur during sign-up
+                Console.WriteLine($"An error occurred while signing up: {ex.Message}");
+            }
+        }
+        else
+        {
+            // Log if userId or trainingPlan is null
+            Console.WriteLine("Sign-up failed: userId or trainingPlan is null.");
         }
     }
 }

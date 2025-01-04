@@ -299,7 +299,7 @@ namespace RowFlex.Migrations
                     b.Property<double>("Distance")
                         .HasColumnType("float");
 
-                    b.Property<int>("TrainingId")
+                    b.Property<int>("TrainingPlanId")
                         .HasColumnType("int");
 
                     b.Property<TimeSpan>("TrainingTime")
@@ -317,7 +317,7 @@ namespace RowFlex.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TrainingId");
+                    b.HasIndex("TrainingPlanId");
 
                     b.HasIndex("UserId");
 
@@ -578,9 +578,9 @@ namespace RowFlex.Migrations
 
             modelBuilder.Entity("RowFlex.Models.Presence", b =>
                 {
-                    b.HasOne("RowFlex.Models.Training", "Training")
+                    b.HasOne("RowFlex.Models.TrainingPlan", "TrainingPlan")
                         .WithMany()
-                        .HasForeignKey("TrainingId")
+                        .HasForeignKey("TrainingPlanId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -590,7 +590,7 @@ namespace RowFlex.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Training");
+                    b.Navigation("TrainingPlan");
 
                     b.Navigation("User");
                 });
