@@ -1,0 +1,77 @@
+@page "/training-plans/{planId:int}/participants"
+
+@using RowFlex.Data
+@using RowFlex.Models
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
+
+<PageTitle>View Participants</PageTitle>
+
+<h3>Participants List</h3>
+
+<div>
+    @if (trainingPlan != null && trainingPlan.Training != null)
+    {
+        <h4>@trainingPlan.Training.Title</h4>
+        <p>Scheduled Date: @trainingPlan.TrainingDate.ToString("MMM dd, yyyy")</p>
+
+        <h5>Participants</h5>
+        @if (participants == null || !participants.Any())
+        {
+            <p>No participants yet.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var participant in participants)
+                {
+                    <li class="list-group-item">@participant.User?.Name @participant.User?.Surname</li>
+                }
+            </ul>
+        }
+    }
+    else
+    {
+        <p>Loading...</p>
+    }
+</div>
+
+@code {
+    [Parameter] public int planId { get; set; }
+
+    private TrainingPlan trainingPlan;
+    private List<Presence> participants;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTrainingPlan();
+    }
+
+    private async Task LoadTrainingPlan()
+    {
+        trainingPlan = null;
+        participants = new List<Presence>();
+
+        try
+        {
+            trainingPlan = await DbContext.TrainingPlans
+                .Include(tp => tp.Training)
+                .FirstOrDefaultAsync(tp => tp.Id == planId);
+
+            if (trainingPlan != null)
+            {
+                participants = await DbContext.Presences
+                    .Where(p => p.TrainingPlanId == planId)
+                    .Include(p => p.User)
+                    .ToListAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while loading the training plan: {ex.Message}");
+        }
+    }
+}

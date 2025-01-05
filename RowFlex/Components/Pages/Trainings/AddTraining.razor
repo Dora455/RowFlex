@@ -4,12 +4,13 @@
 
 @using RowFlex.Models
 @using RowFlex.Data
+@inject TrainingService TrainingService
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavigationManager
 
 <PageTitle>Add Training</PageTitle>
 
-<h3>Add Trainiing</h3>
+<h3>Add Training</h3>
 
 <EditForm Model="newTrainingModel" OnValidSubmit="HandleValidSubmit" FormName="addTrainingForm">
     <DataAnnotationsValidator />
@@ -28,6 +29,12 @@
                 <option value="@type">@type</option>
             }
         </InputSelect>
+    </div>
+
+    <!-- Pole opisu -->
+    <div class="form-group">
+        <label for="description">Description:</label>
+        <InputTextArea id="description" class="form-control" @bind-Value="newTrainingModel.Description" />
     </div>
 
     <button type="submit" class="btn btn-primary mt-3">Save</button>

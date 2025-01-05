@@ -20,6 +20,11 @@
     </div>
 
     <div class="form-group">
+        <label for="newTrainingDescription">Training Description:</label>
+        <InputTextArea id="newTrainingDescription" class="form-control" @bind-Value="newTrainingModel.Description" />
+    </div>
+
+    <div class="form-group">
         <label for="newTrainingType">Training Type:</label>
         <InputSelect id="newTrainingType" class="form-control" @bind-Value="newTrainingModel.TrainingType">
             @foreach (var type in Enum.GetValues<ETreningType>())
