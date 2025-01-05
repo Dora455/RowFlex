@@ -24,3 +24,5 @@ public class TrainingPlanService
         await _dbContext.SaveChangesAsync();
     }
 }
+
+
