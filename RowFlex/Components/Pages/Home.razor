@@ -5,7 +5,7 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Welcome to the RowFlex!</h1>
+<h1>Welcome to RowFlex!</h1>
 
 <div class="row">
     <!-- News Section -->
@@ -24,10 +24,12 @@
             <ul class="list-group">
                 @foreach (var news in NewsList)
                 {
-                    <li class="list-group-item">
-                        <h5>@news.Title</h5>
-                        <p>@news.Description</p>
-                        <small><i>Published on: @news.PublishedDate.ToString("MMM dd, yyyy")</i></small>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5>@news.Title</h5>
+                            <p class="mb-0 text-muted">@news.Description</p>
+                            <small><i>Published on: @news.PublishedDate.ToString("MMM dd, yyyy")</i></small>
+                        </div>
                     </li>
                 }
             </ul>
@@ -71,5 +73,27 @@
         // Fetch the news and events from the database
         NewsList = await DataBaseService.GetAllNewsAsync();
         EventList = await DataBaseService.GetAllEventsAsync();
+
+        // Filter out past events
+        var currentDateTime = DateTime.UtcNow;
+        EventList = EventList.Where(e => e.StartDate >= currentDateTime).ToList();
+
+        // Fetch training plans and convert them to news items
+        var trainingPlans = await DataBaseService.GetAllTrainingPlansAsync();
+        foreach (var plan in trainingPlans)
+        {
+            if (plan.TrainingDate >= currentDateTime)
+            {
+                NewsList.Add(new News
+                {
+                    Title = "New Training Plan: " + plan.Training?.Title,
+                    Description = "Scheduled Date: " + plan.TrainingDate.ToString("MMM dd, yyyy") + "\nDescription: " + plan.Training?.Description,
+                    PublishedDate = plan.TrainingDate
+                });
+            }
+        }
+
+        // Sort news by PublishedDate in descending order
+        NewsList = NewsList.OrderBy(n => n.PublishedDate).ToList();
     }
 }

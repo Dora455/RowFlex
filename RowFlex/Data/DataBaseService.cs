@@ -29,7 +29,12 @@ public class DataBaseService
             await _context.SaveChangesAsync();
         }
     }
-
+    public async Task<List<TrainingPlan>> GetAllTrainingPlansAsync()
+    {
+        return await _context.TrainingPlans
+            .Include(tp => tp.Training)
+            .ToListAsync();
+    }
     public async Task AddEventAsync(Event _event)
     {
         _context.Events.Add(_event);

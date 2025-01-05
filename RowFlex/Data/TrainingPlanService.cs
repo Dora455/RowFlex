@@ -11,10 +11,13 @@ public class TrainingPlanService
         _dbContext = dbContext;
     }
 
-    // Download all training plans
+
     public async Task<List<TrainingPlan>> GetAllTrainingPlansAsync()
     {
-        return await _dbContext.TrainingPlans.Include(tp => tp.Training).ToListAsync();
+        return await _dbContext.TrainingPlans
+            .Include(tp => tp.Training)
+            .OrderByDescending(tp => tp.TrainingDate) // Sort by TrainingDate
+            .ToListAsync();
     }
 
     // Add new training plan

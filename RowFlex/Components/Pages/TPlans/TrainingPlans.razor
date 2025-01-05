@@ -131,6 +131,7 @@
         {
             trainingPlans = await DbContext.TrainingPlans
                 .Include(tp => tp.Training)
+                .OrderByDescending(tp => tp.TrainingDate) // Sort by TrainingDate
                 .ToListAsync();
         }
         catch (Exception ex)
