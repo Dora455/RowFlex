@@ -1,0 +1,127 @@
+@page "/manage-progress"
+
+@using RowFlex.Models
+@using RowFlex.Data
+@using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+@inject IHttpContextAccessor HttpContextAccessor
+@inject ClubService clubService
+@inject DataBaseService dataBaseService
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavigationManager
+@inject PresenceService PresenceService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Manage Progress</PageTitle>
+
+<h3>Manage Progress</h3>
+
+@if (presenceRecords == null)
+{
+    <p>Loading...</p>
+}
+else if (!presenceRecords.Any())
+{
+    <p>You are not signed up for any trainings.</p>
+}
+else
+{
+    <div>
+        @if (!string.IsNullOrEmpty(statusMessage))
+        {
+            <div class="alert @statusMessageClass">@statusMessage</div>
+        }
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Training Title</th>
+                    <th>Training Date</th>
+                    <th>Watts</th>
+                    <th>Watts per 500m</th>
+                    <th>Cart</th>
+                    <th>Distance</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var presence in presenceRecords)
+                {
+                    <tr>
+                        <td>@presence.TrainingPlan?.Training?.Title</td>
+                        <td>@presence.TrainingPlan?.TrainingDate.ToString("MMM dd, yyyy")</td>
+                        <td><input type="number" @bind="presence.Watts" class="form-control" /></td>
+                        <td><input type="number" @bind="presence.WattsPer500m" class="form-control" /></td>
+                        <td><input type="number" @bind="presence.Cart" class="form-control" /></td>
+                        <td><input type="number" @bind="presence.Distance" class="form-control" /></td>
+                        <td>
+                            <button class="btn btn-primary" @onclick="@(async () => await DebouncedSaveProgress(presence))">Save</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<Presence> presenceRecords;
+    private string statusMessage;
+    private string statusMessageClass;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("OnInitializedAsync called");
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (userId != null)
+        {
+            presenceRecords = await DbContext.Presences
+                .Where(p => p.UserId == userId)
+                .Include(p => p.TrainingPlan)
+                .ThenInclude(tp => tp.Training)
+                .ToListAsync();
+            Console.WriteLine($"Loaded {presenceRecords.Count} presence records for user {userId}.");
+        }
+        else
+        {
+            Console.WriteLine("User ID is null.");
+        }
+    }
+
+    private async Task DebouncedSaveProgress(Presence presence)
+    {
+        await SaveProgress(presence);
+    }
+
+    /// <summary>
+    /// Saves the progress of the given presence record to the database.
+    /// </summary>
+    /// <param name="presence">The presence record to save.</param>
+    private async Task SaveProgress(Presence presence)
+    {
+        Console.WriteLine("Save button clicked!");
+        try
+        {
+            Console.WriteLine($"Attempting to save progress for Presence ID: {presence.Id}, User ID: {presence.UserId}");
+            Console.WriteLine($"Watts: {presence.Watts}, WattsPer500m: {presence.WattsPer500m}, TrainingTime: {presence.TrainingTime}, Cart: {presence.Cart}, Distance: {presence.Distance}");
+
+            // Attach and mark the entity as modified
+            DbContext.Update(presence);
+            DbContext.Entry(presence).State = EntityState.Modified;
+
+            await DbContext.SaveChangesAsync();
+
+            statusMessage = "Progress saved successfully.";
+            statusMessageClass = "alert-success";
+            Console.WriteLine("Progress saved successfully.");
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error saving progress: {ex.Message}";
+            statusMessageClass = "alert-danger";
+            Console.WriteLine($"Error saving progress: {ex.Message}");
+        }
+    }
+}
