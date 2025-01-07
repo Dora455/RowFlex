@@ -12,8 +12,8 @@ using RowFlex.Data;
 namespace RowFlex.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250104120828_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250107144252_IndividualTraining")]
+    partial class IndividualTraining
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -259,6 +259,48 @@ namespace RowFlex.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Events");
+                });
+
+            modelBuilder.Entity("RowFlex.Models.IndividualTraining", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Cart")
+                        .HasColumnType("int");
+
+                    b.Property<double>("Distance")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("TrainingDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TrainingId")
+                        .HasColumnType("int");
+
+                    b.Property<TimeSpan>("TrainingTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<double>("Watts")
+                        .HasColumnType("float");
+
+                    b.Property<double>("WattsPer500m")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TrainingId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("IndividualTrainings");
                 });
 
             modelBuilder.Entity("RowFlex.Models.News", b =>
@@ -577,6 +619,25 @@ namespace RowFlex.Migrations
                     b.Navigation("Athlete");
 
                     b.Navigation("Club");
+                });
+
+            modelBuilder.Entity("RowFlex.Models.IndividualTraining", b =>
+                {
+                    b.HasOne("RowFlex.Models.Training", "Training")
+                        .WithMany()
+                        .HasForeignKey("TrainingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RowFlex.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Training");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("RowFlex.Models.Presence", b =>
