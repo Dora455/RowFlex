@@ -1,0 +1,133 @@
+@page "/user-progress"
+@rendermode InteractiveServer
+
+@using RowFlex.Models
+@using RowFlex.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext DbContext
+
+<PageTitle>User Progress</PageTitle>
+
+<h3>User Progress</h3>
+
+<div>
+    <h4>Select a User</h4>
+    @if (users == null)
+    {
+        <p>Loading...</p>
+    }
+    else if (!users.Any())
+    {
+        <p>No users found.</p>
+    }
+    else
+    {
+        <select @bind="selectedUserId" class="form-select" aria-label="Select user">
+            <option value="">Choose a user</option>
+            @foreach (var user in users)
+            {
+                <option value="@user.Id">@user.Name @user.Surname</option>
+            }
+        </select>
+        <button class="btn btn-primary mt-2" @onclick="LoadUserProgress">View Progress</button>
+    }
+</div>
+
+@if (selectedUser != null && (presenceRecords != null || individualTrainings != null))
+{
+    <h4>Progress for @selectedUser.Name @selectedUser.Surname</h4>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Training Title</th>
+                <th>Training Date</th>
+                <th>Watts</th>
+                <th>Watts per 500m</th>
+                <th>Cart</th>
+                <th>Distance</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var presence in presenceRecords)
+            {
+                <tr>
+                    <td>@presence.TrainingPlan?.Training?.Title</td>
+                    <td>@presence.TrainingPlan?.TrainingDate.ToString("MMM dd, yyyy")</td>
+                    <td>@presence.Watts</td>
+                    <td>@presence.WattsPer500m</td>
+                    <td>@presence.Cart</td>
+                    <td>@presence.Distance</td>
+                </tr>
+            }
+            @foreach (var training in individualTrainings)
+            {
+                <tr>
+                    <td>@training.Training?.Title</td>
+                    <td>@training.TrainingDate.ToString("MMM dd, yyyy")</td>
+                    <td>@training.Watts</td>
+                    <td>@training.WattsPer500m</td>
+                    <td>@training.Cart</td>
+                    <td>@training.Distance</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<User> users;
+    private List<Presence> presenceRecords;
+    private List<IndividualTraining> individualTrainings;
+    private string selectedUserId;
+    private User selectedUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        try
+        {
+            users = await DbContext.Users.ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading users: {ex.Message}");
+        }
+    }
+
+    private async Task LoadUserProgress()
+    {
+        if (string.IsNullOrEmpty(selectedUserId))
+        {
+            return;
+        }
+
+        try
+        {
+            selectedUser = await DbContext.Users.FindAsync(selectedUserId);
+
+            if (selectedUser != null)
+            {
+                presenceRecords = await DbContext.Presences
+                    .Where(p => p.UserId == selectedUserId)
+                    .Include(p => p.TrainingPlan)
+                    .ThenInclude(tp => tp.Training)
+                    .Where(p => p.TrainingPlan != null && p.TrainingPlan.Training != null && p.TrainingPlan.Training.TrainingType == ETreningType.Ergometer)
+                    .ToListAsync();
+
+                individualTrainings = await DbContext.IndividualTrainings
+                    .Where(it => it.UserId == selectedUserId)
+                    .Include(it => it.Training)
+                    .Where(it => it.Training != null && it.Training.TrainingType == ETreningType.Ergometer)
+                    .ToListAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading user progress: {ex.Message}");
+        }
+    }
+}
