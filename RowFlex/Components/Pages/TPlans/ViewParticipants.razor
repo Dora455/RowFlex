@@ -5,8 +5,10 @@
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ClubService clubService
 @using Microsoft.EntityFrameworkCore
 @using System.Security.Claims
+@rendermode InteractiveServer
 
 <PageTitle>View Participants</PageTitle>
 
@@ -28,7 +30,23 @@
             <ul class="list-group">
                 @foreach (var participant in participants)
                 {
-                    <li class="list-group-item">@participant.User?.Name @participant.User?.Surname</li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <span>@participant.User?.Name @participant.User?.Surname</span>
+                        </div>
+                        @if (participant.TrainingPlan.Training.TrainingType == ETreningType.Water)
+                        {
+                            @if (participant.IsBoatAssigned)
+                            {
+                                <span class="badge bg-success ms-2">Boat Assigned!</span>
+                            }
+                            <button class="btn btn-sm @(participant.IsBoatAssigned ? "btn-danger" : "btn-primary")"
+                                @onclick="() => ToggleBoatAssignment(participant)">
+                                @(participant.IsBoatAssigned ? "Unassign Boat" : "Assign Boat")
+                            </button>
+                        }
+
+                    </li>
                 }
             </ul>
         }
@@ -58,20 +76,40 @@
         try
         {
             trainingPlan = await DbContext.TrainingPlans
-                .Include(tp => tp.Training)
-                .FirstOrDefaultAsync(tp => tp.Id == planId);
+            .Include(tp => tp.Training)
+            .FirstOrDefaultAsync(tp => tp.Id == planId);
 
             if (trainingPlan != null)
             {
                 participants = await DbContext.Presences
-                    .Where(p => p.TrainingPlanId == planId)
-                    .Include(p => p.User)
-                    .ToListAsync();
+                .Where(p => p.TrainingPlanId == planId)
+                .Include(p => p.User)
+                .ToListAsync();
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"An error occurred while loading the training plan: {ex.Message}");
         }
+    }
+
+    private async Task ToggleBoatAssignment(Presence presence)
+    {
+        try
+        {
+            presence.IsBoatAssigned = !presence.IsBoatAssigned;
+            await DbContext.SaveChangesAsync();
+
+            participants = await DbContext.Presences
+            .Where(p => p.TrainingPlanId == planId)
+            .Include(p => p.User)
+            .ToListAsync();
+        }
+
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while assigning the boat: {ex.Message}");
+        }
+
     }
 }
