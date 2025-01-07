@@ -147,8 +147,8 @@ else
                 .Where(p => p.UserId == userId)
                 .Include(p => p.TrainingPlan)
                 .ThenInclude(tp => tp.Training)
+                .Where(p => p.TrainingPlan != null && p.TrainingPlan.Training != null && p.TrainingPlan.Training.TrainingType == ETreningType.Ergometer)
                 .ToListAsync();
-            Console.WriteLine($"Loaded {presenceRecords.Count} presence records for user {userId}.");
         }
         catch (Exception ex)
         {
@@ -163,9 +163,9 @@ else
             individualTrainings = await DbContext.IndividualTrainings
                 .Where(it => it.UserId == userId)
                 .Include(it => it.Training)
+                .Where(it => it.Training != null && it.Training.TrainingType == ETreningType.Ergometer)
                 .OrderByDescending(it => it.TrainingDate)
                 .ToListAsync();
-            Console.WriteLine($"Loaded {individualTrainings.Count} individual trainings for user {userId}.");
         }
         catch (Exception ex)
         {
