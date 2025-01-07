@@ -1,0 +1,173 @@
+@page "/individual-trainings"
+@rendermode InteractiveServer
+
+@using RowFlex.Data
+@using RowFlex.Models
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavigationManager
+@inject IHttpContextAccessor HttpContextAccessor
+@using System.Security.Claims
+
+<PageTitle>Individual Trainings</PageTitle>
+
+<h3>Individual Trainings</h3>
+
+<div class="row">
+    <!-- Existing Individual Trainings Section -->
+    <div class="col-md-8">
+        <h4>Existing Individual Trainings</h4>
+        @if (individualTrainings == null)
+        {
+            <p>Loading individual trainings...</p>
+        }
+        else if (!individualTrainings.Any())
+        {
+            <p>No individual trainings available.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var training in individualTrainings)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5>@training.Training?.Title</h5>
+                            <p>Training Date: @training.TrainingDate.ToString("MMM dd, yyyy")</p>
+                            <p class="text-muted small">@training.Training?.Description</p>
+                        </div>
+                        <div>
+                            <button class="btn btn-danger me-2" @onclick="() => DeleteTraining(training.Id)">Delete</button>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+
+    <!-- Add Individual Training Section -->
+    <div class="col-md-4">
+        <h4>Add Individual Training</h4>
+        <div>
+            <select @bind="selectedTrainingId" class="form-control">
+                <option value="">-- Select a Training --</option>
+                @foreach (var training in trainings)
+                {
+                    <option value="@training.Id">@training.Title</option>
+                }
+            </select>
+            <div class="mt-3">
+                <label for="trainingDate">Training Date:</label>
+                <InputDate @bind-Value="trainingDate" class="form-control" id="trainingDate" />
+            </div>
+            <button class="btn btn-primary mt-3" @onclick="AddIndividualTraining">Add Individual Training</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Training> trainings = new();
+    private List<IndividualTraining> individualTrainings = new();
+    private int selectedTrainingId;
+    private DateTime? trainingDate;
+    private string userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        await LoadIndividualTrainings();
+        await LoadTrainings();
+    }
+
+    private async Task LoadIndividualTrainings()
+    {
+        if (!string.IsNullOrEmpty(userId))
+        {
+            try
+            {
+                individualTrainings = await DbContext.IndividualTrainings
+                    .Where(it => it.UserId == userId)
+                    .Include(it => it.Training)
+                    .OrderByDescending(it => it.TrainingDate)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading individual trainings: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task LoadTrainings()
+    {
+        try
+        {
+            trainings = await DbContext.Trainings.ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading trainings: {ex.Message}");
+        }
+    }
+
+    private async Task AddIndividualTraining()
+    {
+        if (selectedTrainingId != 0 && trainingDate.HasValue && !string.IsNullOrEmpty(userId))
+        {
+            try
+            {
+                var newIndividualTraining = new IndividualTraining
+                {
+                    TrainingId = selectedTrainingId,
+                    UserId = userId,
+                    TrainingDate = trainingDate.Value,
+                    Watts = 0,
+                    WattsPer500m = 0,
+                    TrainingTime = TimeSpan.Zero,
+                    Cart = 0,
+                    Distance = 0
+                };
+
+                DbContext.IndividualTrainings.Add(newIndividualTraining);
+                await DbContext.SaveChangesAsync();
+
+                // Refresh the individual trainings list
+                await LoadIndividualTrainings();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding individual training: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task DeleteTraining(int trainingId)
+    {
+        if (!string.IsNullOrEmpty(userId))
+        {
+            try
+            {
+                var training = await DbContext.IndividualTrainings
+                    .FirstOrDefaultAsync(it => it.Id == trainingId && it.UserId == userId);
+
+                if (training != null)
+                {
+                    DbContext.IndividualTrainings.Remove(training);
+                    await DbContext.SaveChangesAsync();
+
+                    // Refresh the individual trainings list
+                    await LoadIndividualTrainings();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting individual training: {ex.Message}");
+            }
+        }
+    }
+}
