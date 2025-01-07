@@ -1,15 +1,67 @@
 ﻿@page "/"
 @using RowFlex.Models
 @using RowFlex.Data
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+
 @inject DataBaseService DataBaseService
+@inject ClubService clubService
+@inject TrainingPlanService trainingPlanService
+@inject IHttpContextAccessor HttpContextAccessor
+
+@attribute [Authorize]
 
 <PageTitle>Home</PageTitle>
 
 <h1>Welcome to RowFlex!</h1>
 
+<AuthorizeView Roles="Athlete">
+    @if (user.IsWeightMeasurementRequired && isWeightMeasurementExpired)
+    {
+        <div class="alert alert-warning" role="alert">
+            <h4 class="alert-heading">Attention!</h4>
+            <p>Your weight measurement is required, and your last recorded measurement was over 30 days ago.</p>
+        </div>
+    }
+</AuthorizeView>
+
+
 <div class="row">
-    <!-- News Section -->
-    <div class="col-md-8">
+    <div class="col-md-4">
+        <h2>Event Calendar</h2>
+        @if (EventList == null)
+        {
+            <p>Loading events...</p>
+        }
+        else if (!EventList.Any())
+        {
+            <p>No events available.</p>
+        }
+        else
+        {
+            <div class="list-group">
+                @foreach (var eventItem in EventList)
+                {
+                    <div class="list-group-item">
+                        <strong>@eventItem.Title</strong>
+                        <br />
+                        @if (@eventItem.StartDate != @eventItem.EndDate)
+                        {
+                            <small>From: @eventItem.StartDate.ToString("MMM dd, yyyy hh:mm tt")</small>
+
+                            <br />
+                            <small>To: @eventItem.EndDate.ToString("MMM dd, yyyy hh:mm tt")</small>
+                        }
+                        else
+                        {
+                            <small>At: @eventItem.StartDate.ToString("MMM dd, yyyy hh:mm tt")</small>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+    <div class="col-md-4">
         <h2>News</h2>
         @if (NewsList == null)
         {
@@ -35,31 +87,44 @@
             </ul>
         }
     </div>
-
-    <!-- Calendar Section -->
     <div class="col-md-4">
-        <h2>Event Calendar</h2>
-        @if (EventList == null)
+        <h2>Training Information</h2>
+        @if (closestWaterTraining != null)
         {
-            <p>Loading events...</p>
-        }
-        else if (!EventList.Any())
-        {
-            <p>No events available.</p>
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">@closestWaterTraining.Training.TrainingType.ToString()</h5>
+                    <p class="card-text">
+                        <strong>Title:</strong> @closestWaterTraining.Training.Title <br />
+                        <strong>Date:</strong> @closestWaterTraining.TrainingDate.ToString("MMM dd, yyyy hh:mm tt") <br />
+                        <strong>Description:</strong> @closestWaterTraining.Training.Description
+                    </p>
+
+                    <h6>Assigned to Boat:</h6>
+                    <ul class="list-group">
+                        @foreach (var participant in assignedParticipants)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                @participant.User?.Name @participant.User?.Surname
+                            </li>
+                        }
+                    </ul>
+
+                    <h6>Not Assigned to Boat:</h6>
+                    <ul class="list-group">
+                        @foreach (var participant in unassignedParticipants)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                @participant.User?.Name @participant.User?.Surname
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
         }
         else
         {
-            <div class="list-group">
-                @foreach (var eventItem in EventList)
-                {
-                    <div class="list-group-item">
-                        <strong>@eventItem.Title</strong>
-                        <br />
-                        <small>From: @eventItem.StartDate.ToString("MMM dd, yyyy hh:mm tt")</small><br />
-                        <small>To: @eventItem.EndDate.ToString("MMM dd, yyyy hh:mm tt")</small>
-                    </div>
-                }
-            </div>
+            <p>No upcoming water training available.</p>
         }
     </div>
 </div>
@@ -67,33 +132,55 @@
 @code {
     private List<News> NewsList { get; set; }
     private List<Event> EventList { get; set; }
+    string userId;
+    User user;
+    bool isWeightMeasurementExpired = true;
+    TrainingPlan closestWaterTraining;
+    private List<Presence> presence;
+    private List<Presence> assignedParticipants;
+    private List<Presence> unassignedParticipants;
 
     protected override async Task OnInitializedAsync()
     {
-        // Fetch the news and events from the database
+        userId = HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        user = clubService.GetUserById(userId);
+
+        var latestWeight = await clubService.GetLatestWeightMeasurement(userId);
+
+        if (latestWeight != null && latestWeight.Date >= DateTime.Now.AddDays(-30))
+        {
+            isWeightMeasurementExpired = false;
+        }
+
         NewsList = await DataBaseService.GetAllNewsAsync();
         EventList = await DataBaseService.GetAllEventsAsync();
 
-        // Filter out past events
         var currentDateTime = DateTime.UtcNow;
         EventList = EventList.Where(e => e.StartDate >= currentDateTime).ToList();
 
-        // Fetch training plans and convert them to news items
         var trainingPlans = await DataBaseService.GetAllTrainingPlansAsync();
         foreach (var plan in trainingPlans)
         {
             if (plan.TrainingDate >= currentDateTime)
             {
-                NewsList.Add(new News
-                {
-                    Title = "New Training Plan: " + plan.Training?.Title,
-                    Description = "Scheduled Date: " + plan.TrainingDate.ToString("MMM dd, yyyy") + "\nDescription: " + plan.Training?.Description,
-                    PublishedDate = plan.TrainingDate
-                });
+                EventList.Add(new Event
+                    {
+                        Title = plan.Training.TrainingType + " training: " + plan.Training?.Title,
+                        Description = "Scheduled Date: " + plan.TrainingDate.ToString("MMM dd, yyyy") + "\nDescription: " +
+                    plan.Training?.Description,
+                        StartDate = plan.TrainingDate,
+                        EndDate = plan.TrainingDate
+                    });
             }
         }
 
-        // Sort news by PublishedDate in descending order
-        NewsList = NewsList.OrderBy(n => n.PublishedDate).ToList();
+
+        NewsList = NewsList.OrderByDescending(n => n.PublishedDate).ToList();
+        EventList = EventList.OrderBy(n => n.StartDate).ToList();
+
+        closestWaterTraining = await trainingPlanService.GetClosestWaterTraining();
+        presence = await trainingPlanService.GetTrainingParticipants(closestWaterTraining);
+        assignedParticipants = presence.Where(p => p.IsBoatAssigned).ToList();
+        unassignedParticipants = presence.Where(p => !p.IsBoatAssigned).ToList();
     }
 }
