@@ -10,8 +10,6 @@ using RowFlex.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 
-
-
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
@@ -37,6 +35,8 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<ClubService>();
 builder.Services.AddScoped<DataBaseService>();
+builder.Services.AddScoped<ClubGateway>();
+builder.Services.AddScoped<UserQuery>();
 //Training services
 builder.Services.AddScoped<TrainingService>();
 builder.Services.AddScoped<PresenceService>();

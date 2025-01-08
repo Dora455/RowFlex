@@ -4,6 +4,9 @@
 @using RowFlex.Models
 @using RowFlex.Data
 @inject ClubService clubService
+@inject DataBaseService dbService
+@inject ClubGateway clubGateway
+@inject UserQuery userQuery
 @inject IHttpContextAccessor HttpContextAccessor
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
@@ -74,8 +77,8 @@
     protected override async Task OnInitializedAsync()
     {
         userId = HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        user = clubService.GetUserById(userId);
-        Clubs = await clubService.GetAllClubsAsync();
+        user = userQuery.GetUserById(userId);
+        Clubs = await clubGateway.GetAllAsync();
         UserMemberships = await clubService.GetUserMembershipsAsync(userId);
     }
 

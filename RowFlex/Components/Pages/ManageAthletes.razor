@@ -4,6 +4,8 @@
 @using RowFlex.Models
 @using RowFlex.Data
 @inject ClubService clubService
+@inject DataBaseService dbService
+@inject UserQuery userQuery
 @inject IHttpContextAccessor HttpContextAccessor
 @rendermode InteractiveServer
 @using System.Security.Claims
@@ -194,7 +196,7 @@
         var latestWeight = await clubService.GetLatestWeightMeasurement(athleteId);
         if (latestWeight != null)
         {
-            var athlete = clubService.GetUserById(athleteId);
+            var athlete = userQuery.GetUserById(athleteId);
             return clubService.GetWeightCategory(athlete, latestWeight.Weight);
         }
 

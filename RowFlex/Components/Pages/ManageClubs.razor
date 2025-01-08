@@ -2,10 +2,11 @@
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
 @rendermode InteractiveServer
-@inject ClubService clubService
+@inject ClubGateway clubGateway
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @using System.Security.Claims
 @using RowFlex.Models
+@using RowFlex.Data
 
 <AuthorizeView>
     Hello @context.User.Identity?.Name!
@@ -55,7 +56,7 @@
 
     private async Task LoadClubs()
     {
-        Clubs = await clubService.GetAllClubsAsync();
+        Clubs = await clubGateway.GetAllAsync();
     }
 
     public async Task AddClub()
@@ -63,7 +64,7 @@
         if (!string.IsNullOrWhiteSpace(ClubName))
         {
             var club = new Club { Name = ClubName };
-            await clubService.AddNewClub(club);
+            await clubGateway.AddAsync(club);
             ClubName = string.Empty;
             await LoadClubs();
         }
@@ -71,7 +72,7 @@
 
     public async Task DeleteClub(int clubId)
     {
-        await clubService.RemoveClubAsync(clubId);
+        await clubGateway.DeleteAsync(clubId);
         await LoadClubs();
     }
 }

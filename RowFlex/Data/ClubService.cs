@@ -27,14 +27,7 @@ public class ClubService
             .Include(c => c.ClubMembers)
             .FirstOrDefault(c => c.Id == clubId);
     }
-    public User GetUserById(string userId)
-    {
-        return _context.Users.Find(userId);
-    }
-    public async Task<User?> GetUserByEmail(string email)
-    {
-        return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-    }
+
     public async Task<List<ClubMembership>> GetAllAthletesForClub(int clubId)
     {
         return _context.ClubMemberships
@@ -43,29 +36,6 @@ public class ClubService
             .ToList();
     }
 
-    public async Task<List<Club>> GetAllClubsAsync()
-    {
-        return await _context.Clubs.ToListAsync();
-    }
-    public async Task AddNewClub(Club club)
-    {
-        _context.Clubs.Add(club);
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task RemoveClubAsync(int clubId)
-    {
-        var clubCoaches = _context.ClubCoaches.Where(cc => cc.ClubId == clubId);
-        _context.ClubCoaches.RemoveRange(clubCoaches);
-
-        var clubMemberships = _context.ClubMemberships.Where(cm => cm.ClubId == clubId);
-        _context.ClubMemberships.RemoveRange(clubMemberships);
-
-        // Step 3: Delete the club itself
-        var club = await _context.Clubs.FindAsync(clubId);
-        _context.Clubs.Remove(club);
-        await _context.SaveChangesAsync();
-    }
     public async Task<List<ClubCoach>> GetAllClubCoachesAsync()
     {
         return await _context.ClubCoaches

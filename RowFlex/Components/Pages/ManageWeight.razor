@@ -2,7 +2,9 @@
 @using RowFlex.Models
 @inject IHttpContextAccessor HttpContextAccessor
 @inject ClubService clubService
+@inject DataBaseService dbService
 @inject DataBaseService dataBaseService
+@inject UserQuery userQuery
 @using System.Security.Claims
 @rendermode InteractiveServer
 
@@ -51,7 +53,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         userId = HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        user = clubService.GetUserById(userId);
+        user = userQuery.GetUserById(userId);
         previousMeasurements = await dataBaseService.GetWeightMeasurementsForUser(userId);
 
     }
