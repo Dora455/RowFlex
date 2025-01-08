@@ -13,7 +13,7 @@ public class TrainingPlan
     [ForeignKey(nameof(Training))]
     public int TrainingId { get; set; }
 
-    public Training? Training { get; set; }
+    public virtual Training? Training { get; set; }
     public DateTime TrainingDate { get; set; }
 
 }

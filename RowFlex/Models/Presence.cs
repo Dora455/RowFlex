@@ -12,7 +12,7 @@ public class Presence
     [ForeignKey(nameof(TrainingPlan))]
     public int TrainingPlanId { get; set; } // Nowe pole dla powiązania z TrainingPlan
 
-    public TrainingPlan? TrainingPlan { get; set; } // Nawigacja do TrainingPlan
+    public virtual TrainingPlan? TrainingPlan { get; set; } // Nawigacja do TrainingPlan
 
     [Required]
     public DateTime Date { get; set; }
@@ -21,7 +21,7 @@ public class Presence
     [ForeignKey(nameof(User))]
     public string UserId { get; set; } // Użytkownik, który uczestniczył w treningu
 
-    public User? User { get; set; }
+    public virtual User? User { get; set; }
 
     public bool IsBoatAssigned { get; set; } = false;
 

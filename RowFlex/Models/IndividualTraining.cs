@@ -11,24 +11,24 @@ public class IndividualTraining
     [ForeignKey(nameof(Training))]
     public int TrainingId { get; set; }
 
-    public Training? Training { get; set; }
+    public virtual Training? Training { get; set; }
 
     [Required]
     [ForeignKey(nameof(User))]
     public string UserId { get; set; }
 
-    public User? User { get; set; }
+    public virtual User? User { get; set; }
 
     public DateTime TrainingDate { get; set; }
 
     //progress 
     public double Watts { get; set; }
-    
-    public double WattsPer500m { get; set; } 
-    
-    public TimeSpan TrainingTime { get; set; } 
-    
-    public int Cart { get; set; } 
-    
-    public double Distance { get; set; }    
+
+    public double WattsPer500m { get; set; }
+
+    public TimeSpan TrainingTime { get; set; }
+
+    public int Cart { get; set; }
+
+    public double Distance { get; set; }
 }
