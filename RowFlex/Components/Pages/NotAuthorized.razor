@@ -1,0 +1,39 @@
+@page "/not-authorized"
+@using Microsoft.AspNetCore.Authorization
+@using RowFlex.Models
+@using RowFlex.Data
+
+@inject UserQuery userQuery
+@inject IHttpContextAccessor HttpContextAccessor
+@using System.Security.Claims
+@attribute [Authorize]
+
+<AuthorizeView>
+    Hello @context.User.Identity?.Name!
+</AuthorizeView>
+
+<AuthorizeView Roles="Coach">
+    Hej trenerze
+</AuthorizeView>
+
+<AuthorizeView Roles="Athlete">
+    @if (user.AuthorizedByClub == false)
+
+    {
+        <h1>nie jestes atleto zautentykowany</h1>
+    }
+    else
+    {
+        <h1>gratki</h1>
+    }
+</AuthorizeView>
+
+@code {
+    string userId;
+    User user;
+    protected override async Task OnInitializedAsync()
+    {
+        userId = HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        user = userQuery.GetUserById(userId);
+    }
+}

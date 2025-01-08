@@ -6,6 +6,7 @@
 
 @inject DataBaseService DataBaseService
 @inject ClubService clubService
+@inject UserQuery userQuery
 @inject TrainingPlanService trainingPlanService
 @inject IHttpContextAccessor HttpContextAccessor
 
@@ -143,7 +144,7 @@
     protected override async Task OnInitializedAsync()
     {
         userId = HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        user = clubService.GetUserById(userId);
+        user = userQuery.GetUserById(userId);
 
         var latestWeight = await clubService.GetLatestWeightMeasurement(userId);
 

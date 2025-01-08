@@ -10,7 +10,7 @@
 @using RowFlex.Data
 @using RowFlex.Models
 
-@inject ClubService clubService
+@inject ClubGateway clubGateway
 @inject UserManager<User> UserManager
 @inject IUserStore<User> UserStore
 @inject SignInManager<User> SignInManager
@@ -98,7 +98,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Clubs = await clubService.GetAllClubsAsync();
+        Clubs = await clubGateway.GetAllAsync();
     }
 
     public async Task RegisterUser(EditContext editContext)
