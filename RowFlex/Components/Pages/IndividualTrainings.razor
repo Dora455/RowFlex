@@ -6,7 +6,8 @@
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject ApplicationDbContext DbContext
+@inject IndividualTrainingService iTrainingService
+@inject TrainingService trainingService
 @inject NavigationManager NavigationManager
 @inject IHttpContextAccessor HttpContextAccessor
 @using System.Security.Claims
@@ -90,11 +91,7 @@
         {
             try
             {
-                individualTrainings = await DbContext.IndividualTrainings
-                    .Where(it => it.UserId == userId)
-                    .Include(it => it.Training)
-                    .OrderByDescending(it => it.TrainingDate)
-                    .ToListAsync();
+                individualTrainings = await iTrainingService.GetAllUserIndividualTrainings(userId);
             }
             catch (Exception ex)
             {
@@ -107,7 +104,7 @@
     {
         try
         {
-            trainings = await DbContext.Trainings.ToListAsync();
+            trainings = await trainingService.GetAllTrainingsAsync();
         }
         catch (Exception ex)
         {
@@ -122,21 +119,17 @@
             try
             {
                 var newIndividualTraining = new IndividualTraining
-                {
-                    TrainingId = selectedTrainingId,
-                    UserId = userId,
-                    TrainingDate = trainingDate.Value,
-                    Watts = 0,
-                    WattsPer500m = 0,
-                    TrainingTime = TimeSpan.Zero,
-                    Cart = 0,
-                    Distance = 0
-                };
-
-                DbContext.IndividualTrainings.Add(newIndividualTraining);
-                await DbContext.SaveChangesAsync();
-
-                // Refresh the individual trainings list
+                    {
+                        TrainingId = selectedTrainingId,
+                        UserId = userId,
+                        TrainingDate = trainingDate.Value,
+                        Watts = 0,
+                        WattsPer500m = 0,
+                        TrainingTime = TimeSpan.Zero,
+                        Cart = 0,
+                        Distance = 0
+                    };
+                iTrainingService.AddAsync(newIndividualTraining);
                 await LoadIndividualTrainings();
             }
             catch (Exception ex)
@@ -150,24 +143,8 @@
     {
         if (!string.IsNullOrEmpty(userId))
         {
-            try
-            {
-                var training = await DbContext.IndividualTrainings
-                    .FirstOrDefaultAsync(it => it.Id == trainingId && it.UserId == userId);
-
-                if (training != null)
-                {
-                    DbContext.IndividualTrainings.Remove(training);
-                    await DbContext.SaveChangesAsync();
-
-                    // Refresh the individual trainings list
-                    await LoadIndividualTrainings();
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error deleting individual training: {ex.Message}");
-            }
+            iTrainingService.DeleteAsync(trainingId);
         }
+        await LoadIndividualTrainings();
     }
 }

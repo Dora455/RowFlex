@@ -37,10 +37,12 @@ builder.Services.AddScoped<ClubService>();
 builder.Services.AddScoped<DataBaseService>();
 builder.Services.AddScoped<ClubGateway>();
 builder.Services.AddScoped<UserQuery>();
+builder.Services.AddScoped<IndividualTrainingService>();
 //Training services
 builder.Services.AddScoped<TrainingService>();
 builder.Services.AddScoped<PresenceService>();
 builder.Services.AddScoped<TrainingPlanService>();
+builder.Services.AddScoped<IndividualTrainingService>();
 
 var app = builder.Build();
 

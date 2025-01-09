@@ -180,7 +180,7 @@
         EventList = EventList.OrderBy(n => n.StartDate).ToList();
 
         closestWaterTraining = await trainingPlanService.GetClosestWaterTraining();
-        presence = await trainingPlanService.GetTrainingParticipants(closestWaterTraining);
+        presence = await trainingPlanService.GetTrainingParticipants(closestWaterTraining.Id);
         assignedParticipants = presence.Where(p => p.IsBoatAssigned).ToList();
         unassignedParticipants = presence.Where(p => !p.IsBoatAssigned).ToList();
     }

@@ -20,6 +20,13 @@ public class TrainingPlanService
             .ToListAsync();
     }
 
+    public async Task<TrainingPlan> GetTrainingPlanById(int id)
+    {
+        return await _dbContext.TrainingPlans
+            .Include(tp => tp.Training)
+            .FirstOrDefaultAsync(tp => tp.Id == id);
+    }
+
     // Add new training plan
     public async Task AddTrainingPlanAsync(TrainingPlan trainingPlan)
     {
@@ -37,10 +44,10 @@ public class TrainingPlanService
 
         return closestWaterTraining;
     }
-    public async Task<List<Presence>> GetTrainingParticipants(TrainingPlan plan)
+    public async Task<List<Presence>> GetTrainingParticipants(int planId)
     {
         var presence = await _dbContext.Presences
-                .Where(p => p.TrainingPlanId == plan.Id)
+                .Where(p => p.TrainingPlanId == planId)
                 .Include(p => p.User)
                 .ToListAsync();
         return presence;
