@@ -2,7 +2,8 @@
 
 @using RowFlex.Data
 @using RowFlex.Models
-@inject ApplicationDbContext DbContext
+@inject TrainingPlanService trainingPlanService
+@inject PresenceService presenceService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @using Microsoft.EntityFrameworkCore
@@ -74,16 +75,10 @@
 
         try
         {
-            trainingPlan = await DbContext.TrainingPlans
-            .Include(tp => tp.Training)
-            .FirstOrDefaultAsync(tp => tp.Id == planId);
-
+            trainingPlan = await trainingPlanService.GetTrainingPlanById(planId);
             if (trainingPlan != null)
             {
-                participants = await DbContext.Presences
-                .Where(p => p.TrainingPlanId == planId)
-                .Include(p => p.User)
-                .ToListAsync();
+                participants = await trainingPlanService.GetTrainingParticipants(planId);
             }
         }
         catch (Exception ex)
@@ -97,12 +92,9 @@
         try
         {
             presence.IsBoatAssigned = !presence.IsBoatAssigned;
-            await DbContext.SaveChangesAsync();
+            presenceService.UpdatePresenceAsync(presence);
 
-            participants = await DbContext.Presences
-            .Where(p => p.TrainingPlanId == planId)
-            .Include(p => p.User)
-            .ToListAsync();
+            participants = await trainingPlanService.GetTrainingParticipants(planId);
         }
 
         catch (Exception ex)

@@ -7,6 +7,8 @@
 @using Microsoft.EntityFrameworkCore
 @inject IHttpContextAccessor HttpContextAccessor
 @inject ApplicationDbContext DbContext
+@inject PresenceService presenceService
+@inject IndividualTrainingService iTrainingService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
@@ -28,7 +30,7 @@ else if (!presenceRecords.Any())
 else
 {
     <div>
-        @if (!string.IsNullOrEmpty(statusMessage))
+    @if (!string.IsNullOrEmpty(statusMessage))
         {
             <div class="alert @statusMessageClass">@statusMessage</div>
         }
@@ -78,7 +80,7 @@ else if (!individualTrainings.Any())
 else
 {
     <div>
-        @if (!string.IsNullOrEmpty(individualStatusMessage))
+    @if (!string.IsNullOrEmpty(individualStatusMessage))
         {
             <div class="alert @individualStatusMessageClass">@individualStatusMessage</div>
         }
@@ -143,12 +145,7 @@ else
     {
         try
         {
-            presenceRecords = await DbContext.Presences
-                .Where(p => p.UserId == userId)
-                .Include(p => p.TrainingPlan)
-                .ThenInclude(tp => tp.Training)
-                .Where(p => p.TrainingPlan != null && p.TrainingPlan.Training != null && p.TrainingPlan.Training.TrainingType == ETreningType.Ergometer)
-                .ToListAsync();
+            presenceRecords = await presenceService.GetAllUserErgometrPresence(userId);
         }
         catch (Exception ex)
         {
@@ -160,12 +157,7 @@ else
     {
         try
         {
-            individualTrainings = await DbContext.IndividualTrainings
-                .Where(it => it.UserId == userId)
-                .Include(it => it.Training)
-                .Where(it => it.Training != null && it.Training.TrainingType == ETreningType.Ergometer)
-                .OrderByDescending(it => it.TrainingDate)
-                .ToListAsync();
+            individualTrainings = await iTrainingService.GetAllUserErgometrIndividualTrainings(userId);
         }
         catch (Exception ex)
         {
@@ -177,7 +169,6 @@ else
     {
         try
         {
-            // Attach and mark the entity as modified
             DbContext.Attach(presence);
             DbContext.Entry(presence).State = EntityState.Modified;
 

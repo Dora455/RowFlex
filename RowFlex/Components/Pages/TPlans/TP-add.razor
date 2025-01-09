@@ -3,7 +3,8 @@
 
 @using RowFlex.Data
 @using RowFlex.Models
-@inject ApplicationDbContext DbContext
+@inject TrainingPlanService trainingPlanService
+@inject TrainingService trainingService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Add New Training</PageTitle>
@@ -48,20 +49,13 @@
 
     private async Task HandleNewTrainingSubmit()
     {
-        // Zapisz nowy trening
-        DbContext.Trainings.Add(newTrainingModel);
-        await DbContext.SaveChangesAsync();
-
-        // Utwórz plan treningowy dla nowego treningu
+        await trainingService.AddTrainingAsync(newTrainingModel);
         var newTrainingPlan = new TrainingPlan
-        {
-            TrainingId = newTrainingModel.Id,
-            TrainingDate = trainingDate ?? DateTime.Now // Jeśli data nie została wybrana, użyj bieżącej
-        };
-        DbContext.TrainingPlans.Add(newTrainingPlan);
-        await DbContext.SaveChangesAsync();
-
-        // Nawigacja do strony planów treningowych
+            {
+                TrainingId = newTrainingModel.Id,
+                TrainingDate = trainingDate ?? DateTime.Now // Jeśli data nie została wybrana, użyj bieżącej
+            };
+        await trainingPlanService.AddTrainingPlanAsync(newTrainingPlan);
         NavigationManager.NavigateTo("/training-plans");
     }
 }

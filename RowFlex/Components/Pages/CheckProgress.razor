@@ -4,7 +4,9 @@
 @using RowFlex.Models
 @using RowFlex.Data
 @using Microsoft.EntityFrameworkCore
-@inject ApplicationDbContext DbContext
+@inject PresenceService presenceService
+@inject IndividualTrainingService iTrainingService
+@inject UserQuery userQuery
 
 <PageTitle>User Progress</PageTitle>
 
@@ -37,18 +39,18 @@
 {
     <h4>Progress for @selectedUser.Name @selectedUser.Surname</h4>
     <table class="table">
-        <thead>
-            <tr>
-                <th>Training Title</th>
-                <th>Training Date</th>
-                <th>Watts</th>
-                <th>Watts per 500m</th>
-                <th>Cart</th>
-                <th>Distance</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var presence in presenceRecords)
+    <thead>
+        <tr>
+            <th>Training Title</th>
+            <th>Training Date</th>
+            <th>Watts</th>
+            <th>Watts per 500m</th>
+            <th>Cart</th>
+            <th>Distance</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var presence in presenceRecords)
             {
                 <tr>
                     <td>@presence.TrainingPlan?.Training?.Title</td>
@@ -90,7 +92,7 @@
     {
         try
         {
-            users = await DbContext.Users.ToListAsync();
+            users = await userQuery.GetAllAsync();
         }
         catch (Exception ex)
         {
@@ -107,22 +109,12 @@
 
         try
         {
-            selectedUser = await DbContext.Users.FindAsync(selectedUserId);
+            selectedUser = userQuery.GetUserById(selectedUserId);
 
             if (selectedUser != null)
             {
-                presenceRecords = await DbContext.Presences
-                    .Where(p => p.UserId == selectedUserId)
-                    .Include(p => p.TrainingPlan)
-                    .ThenInclude(tp => tp.Training)
-                    .Where(p => p.TrainingPlan != null && p.TrainingPlan.Training != null && p.TrainingPlan.Training.TrainingType == ETreningType.Ergometer)
-                    .ToListAsync();
-
-                individualTrainings = await DbContext.IndividualTrainings
-                    .Where(it => it.UserId == selectedUserId)
-                    .Include(it => it.Training)
-                    .Where(it => it.Training != null && it.Training.TrainingType == ETreningType.Ergometer)
-                    .ToListAsync();
+                presenceRecords = await presenceService.GetAllUserErgometrPresence(selectedUserId);
+                individualTrainings = await iTrainingService.GetAllUserErgometrIndividualTrainings(selectedUserId);
             }
         }
         catch (Exception ex)

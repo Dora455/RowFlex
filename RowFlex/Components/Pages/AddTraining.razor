@@ -4,8 +4,7 @@
 
 @using RowFlex.Models
 @using RowFlex.Data
-@inject TrainingService TrainingService
-@inject ApplicationDbContext DbContext
+@inject TrainingService trainingService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Add Training</PageTitle>
@@ -45,8 +44,7 @@
 
     private async Task HandleValidSubmit()
     {
-        DbContext.Trainings.Add(newTrainingModel);
-        await DbContext.SaveChangesAsync();
+        trainingService.AddTrainingAsync(newTrainingModel);
         NavigationManager.NavigateTo("/trainings");
     }
 }
