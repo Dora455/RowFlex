@@ -8,6 +8,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject ApplicationDbContext DbContext
 @inject PresenceService presenceService
+@inject UserQuery userQuery
 @inject IndividualTrainingService iTrainingService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -132,6 +133,11 @@ else
 
         if (userId != null)
         {
+            var tmpUser = userQuery.GetUserById(userId);
+            if (tmpUser != null && tmpUser.AuthorizedByClub == false)
+            {
+                NavigationManager.NavigateTo("/not-authorized");
+            }
             await LoadPresenceRecords(userId);
             await LoadIndividualTrainings(userId);
         }

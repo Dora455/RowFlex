@@ -8,6 +8,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IndividualTrainingService iTrainingService
 @inject TrainingService trainingService
+@inject UserQuery userQuery
 @inject NavigationManager NavigationManager
 @inject IHttpContextAccessor HttpContextAccessor
 @using System.Security.Claims
@@ -80,6 +81,11 @@
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var tmpUser = userQuery.GetUserById(userId);
+        if (tmpUser != null && tmpUser.AuthorizedByClub == false)
+        {
+            NavigationManager.NavigateTo("/not-authorized");
+        }
 
         await LoadIndividualTrainings();
         await LoadTrainings();

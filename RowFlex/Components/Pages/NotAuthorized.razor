@@ -9,18 +9,18 @@
 @attribute [Authorize]
 
 <AuthorizeView>
-    Hello @context.User.Identity?.Name!
+    <h3> Hello @context.User.Identity?.Name! </h3>
 </AuthorizeView>
 
 <AuthorizeView Roles="Coach">
-    Hej trenerze
+    Hej trenerze!
 </AuthorizeView>
 
 <AuthorizeView Roles="Athlete">
     @if (user.AuthorizedByClub == false)
 
     {
-        <h1>nie jestes atleto zautentykowany</h1>
+        <h4>Przykro nam! Nie jestes zautentykowany przez klub</h4>
     }
     else
     {

@@ -2,6 +2,7 @@
 @using RowFlex.Models
 @inject IHttpContextAccessor HttpContextAccessor
 @inject DataBaseService dataBaseService
+@inject NavigationManager NavigationManager
 @inject UserQuery userQuery
 @using System.Security.Claims
 @rendermode InteractiveServer
@@ -52,6 +53,10 @@ else
     {
         userId = HttpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         user = userQuery.GetUserById(userId);
+        if (user != null && user.AuthorizedByClub == false)
+        {
+            NavigationManager.NavigateTo("/not-authorized");
+        }
         previousMeasurements = await dataBaseService.GetWeightMeasurementsForUser(userId);
 
     }
