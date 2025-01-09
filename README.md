@@ -59,8 +59,7 @@ This project incorporates several key design patterns to ensure a clean, maintai
 ### Object Relational Mapping (ORM)
 - **Data Mapper**: Transfers data between objects and the database while maintaining separation of concerns.
 - **Foreign Key Mapping**: Handles relationships between entities via foreign keys. ``` /Models/WeightMeasurements.cs ```
-- **Association Table Mapping**: Maps many-to-many relationships between entities.
-``` /Models/Presence.cs ```
+- **Association Table Mapping**: Maps many-to-many relationships between entities. User ↔ ClubMembership ↔ Club, User ↔ ClubCoach ↔ Club, User ↔ Presence ↔ TrainingPlan
 ### Transaction Management
 - **Unit of Work**: Manages changes to data as a single transactional unit to ensure consistency.
 
