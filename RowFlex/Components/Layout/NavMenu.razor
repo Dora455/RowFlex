@@ -28,35 +28,107 @@
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="auth">
-                <span class="bi bi-lock-nav-menu" aria-hidden="true"></span> Auth Required
-            </NavLink>
-        </div>
-
         <AuthorizeView>
             <Authorized>
-                <!-- Trainings Link -->
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="trainings">
-                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Trainings
-                    </NavLink>
-                </div>
-
                 <!-- Training Plans Link -->
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="training-plans">
-                        <span class="bi bi-calendar-check-fill-nav-menu" aria-hidden="true"></span> Training Plans
+                        <span class="" aria-hidden="true"></span> Training Plans
                     </NavLink>
                 </div>
+                <!-- Trainings Link -->
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="trainings">
+                        <span class="" aria-hidden="true"></span> Trainings
+                    </NavLink>
+                </div>
+            </Authorized>
 
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="Account/Register">
+                        <span class="" aria-hidden="true"></span> Register
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="Account/Login">
+                        <span class="" aria-hidden="true"></span> Login
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+
+
+        <AuthorizeView Roles="Admin">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="club-coach-management">
+                    <span class="" aria-hidden="true"></span> Manage Coaches
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="manageClubs">
+                    <span class="" aria-hidden="true"></span> Manage Clubs
+                </NavLink>
+            </div>
+        </AuthorizeView>
+
+
+        <AuthorizeView Roles="Athlete">
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="manage-progress">
+                    <span class="" aria-hidden="true"></span> Manage Progress
+                </NavLink>
+            </div>
+            @if (user?.IsWeightMeasurementRequired == true)
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="manage-weight">
+                        <span class="" aria-hidden="true"></span> Manage Weight
+                    </NavLink>
+                </div>
+            }
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="individual-trainings">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add individual training
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="request">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Request Membership
+                </NavLink>
+            </div>
+        </AuthorizeView>
+
+
+        <AuthorizeView Roles="Coach">
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="user-progress">
+                    <span class="" aria-hidden="true"></span> Check Progress
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="manageAthletes">
+                    <span class="" aria-hidden="true"></span> Manage Athletes
+                </NavLink>
+                <NavLink class="nav-link" href="AddNews">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add News
+                </NavLink>
+                <NavLink class="nav-link" href="AddEvent">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add Event
+                </NavLink>
+            </div>
+        </AuthorizeView>
+
+
+        <AuthorizeView>
+            <Authorized>
                 <!-- Account Management -->
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Manage">
                         <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
                     </NavLink>
                 </div>
-
                 <!-- Logout Button -->
                 <div class="nav-item px-3">
                     <form action="Account/Logout" method="post">
@@ -68,74 +140,6 @@
                     </form>
                 </div>
             </Authorized>
-
-            <NotAuthorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
-                    </NavLink>
-                </div>
-            </NotAuthorized>
-        </AuthorizeView>
-        <AuthorizeView Roles="Admin">
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="club-coach-management">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Manage Coaches
-                </NavLink>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="manageClubs">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Manage Clubs
-                </NavLink>
-            </div>
-        </AuthorizeView>
-        <AuthorizeView Roles="Athlete">
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="individual-trainings">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add individual training
-                </NavLink>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="request">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Request Membership
-                </NavLink>
-            </div>
-            @if (user?.IsWeightMeasurementRequired == true)
-            {
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="manage-weight">
-                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Manage Weight
-                    </NavLink>
-                </div>
-            }
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="manage-progress">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Manage Progress
-                </NavLink>
-            </div>
-        </AuthorizeView>
-        <AuthorizeView Roles="Coach">
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="user-progress">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Check Progress
-                </NavLink>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="manageAthletes">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Manage Athletes
-                </NavLink>
-                <NavLink class="nav-link" href="AddNews">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add News
-                </NavLink>
-                <NavLink class="nav-link" href="AddEvent">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add Event
-                </NavLink>
-            </div>
         </AuthorizeView>
     </nav>
 </div>
