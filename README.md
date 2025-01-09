@@ -45,7 +45,7 @@ dotnet watch run
 This project incorporates several key design patterns to ensure a clean, maintainable, and scalable architecture:
 
 ### Architectural Patterns
-- **Service Layer**: Encapsulates business logic to ensure separation from data access logic.
+- **Service Layer**: Encapsulates business logic to ensure separation from data access logic. ```bash /Data/DataBaseService.cs ```
 - **Table Data Gateway**: Manages database operations for a single table, providing a clean interface.
 - **MVC (Model View Controller)**: Separates application logic into three interconnected components for better modularity.
 - **Template View**: Provides reusable templates for rendering dynamic content on the front end.
