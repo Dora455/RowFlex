@@ -45,20 +45,20 @@ dotnet watch run
 This project incorporates several key design patterns to ensure a clean, maintainable, and scalable architecture:
 
 ### Architectural Patterns
-- **Service Layer**: Encapsulates business logic to ensure separation from data access logic. ```bash /Data/DataBaseService.cs ```
-- **Table Data Gateway**: Manages database operations for a single table, providing a clean interface.
+- **Service Layer**: Encapsulates business logic to ensure separation from data access logic. ``` /Data/DataBaseService.cs ```
+- **Table Data Gateway**: Manages database operations for a single table, providing a clean interface. ```/Data/ClubGataway.cs ```
 - **MVC (Model View Controller)**: Separates application logic into three interconnected components for better modularity.
-- **Template View**: Provides reusable templates for rendering dynamic content on the front end.
+- **Template View**: Provides reusable templates for rendering dynamic content on the front end. ``` @page "/training-plans/{planId:int}/participants" ```
 
 ### State Management
-- **Server Session State**: Maintains user session data on the server for better security and persistence.
+- **Server Session State**: Maintains user session data on the server for better security and persistence. ``` /Program.cs ```
 
 ### Dependency Management
 - **Dependency Injection**: Decouples components by injecting their dependencies, improving testability and flexibility.
 
 ### Object Relational Mapping (ORM)
 - **Data Mapper**: Transfers data between objects and the database while maintaining separation of concerns.
-- **Foreign Key Mapping**: Handles relationships between entities via foreign keys.
+- **Foreign Key Mapping**: Handles relationships between entities via foreign keys. ``` /Models/WeightMeasurements.cs ```
 - **Association Table Mapping**: Maps many-to-many relationships between entities.
 
 ### Transaction Management
@@ -69,7 +69,7 @@ This project incorporates several key design patterns to ensure a clean, maintai
 
 ### Identity and Query Patterns
 - **Identity Field**: Ensures each database entity has a unique identifier.
-- **Query Object**: Encapsulates database queries in reusable, maintainable objects.
+- **Query Object**: Encapsulates database queries in reusable, maintainable objects. ``` /Data/UserQuery ```
 
 ---
 
