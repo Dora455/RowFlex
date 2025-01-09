@@ -60,7 +60,7 @@ This project incorporates several key design patterns to ensure a clean, maintai
 - **Data Mapper**: Transfers data between objects and the database while maintaining separation of concerns.
 - **Foreign Key Mapping**: Handles relationships between entities via foreign keys. ``` /Models/WeightMeasurements.cs ```
 - **Association Table Mapping**: Maps many-to-many relationships between entities.
-
+``` /Models/Presence.cs ```
 ### Transaction Management
 - **Unit of Work**: Manages changes to data as a single transactional unit to ensure consistency.
 
